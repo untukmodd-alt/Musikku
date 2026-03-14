@@ -602,16 +602,22 @@ async function uploadToCloudinary(file) {
 // ==============================
 async function loadSongsFromFirestore() {
   try {
-    var q = query(collection(db, 'songs'), orderBy('addedAt', 'desc'));
-    onSnapshot(q, function(snapshot) {
+    // Tanpa orderBy dulu biar ga butuh index
+    onSnapshot(collection(db, 'songs'), function(snapshot) {
       songs = snapshot.docs.map(function(d) {
         return Object.assign({ _docId: d.id }, d.data());
       });
+      // Sort di client side
+      songs.sort(function(a,b){ return (b.addedAt||0)-(a.addedAt||0); });
       renderAll();
-      showToast('🎵 ' + songs.length + ' lagu loaded!');
+      if(songs.length > 0) showToast('🎵 ' + songs.length + ' lagu loaded!');
+    }, function(err) {
+      showToast('⚠️ Error: ' + err.message);
+      renderAll();
     });
   } catch(e) {
-    showToast('⚠️ Gagal load lagu: ' + e.message);
+    showToast('⚠️ Gagal load: ' + e.message);
+    renderAll();
   }
 }
 
@@ -641,10 +647,6 @@ async function saveRequestToFirestore(songTitle, requesterName) {
     requestedAt: Date.now(),
     status: 'pending'
   });
-}
-
-function saveFavs(){
-  try{ localStorage.setItem('musikku_favs',JSON.stringify(favs)); }catch(e){}
 }
 
 // ==============================
