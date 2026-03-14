@@ -10,8 +10,8 @@
 <meta name="description" content="Musikku - Streaming musik dari admin buat teman-teman">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>🎵 Musikku</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<title>🎵 Musik 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Bubblegum+Sans&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -90,7 +90,8 @@ header{flex-shrink:0;padding:14px 16px 0;background:rgba(13,13,31,.9);backdrop-f
 .song-card{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;touch-action:manipulation;transition:border-color .2s,background .2s;}
 .song-card.now-playing{border-color:var(--accent);background:rgba(108,99,255,.12);}
 .song-card:active{opacity:.8;}
-.song-art{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;}
+.song-art{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative;overflow:hidden;}
+.song-art img{width:100%;height:100%;object-fit:cover;border-radius:14px;}
 .song-art.spin{animation:spinArt 4s linear infinite;}
 @keyframes spinArt{to{transform:rotate(360deg);}}
 .now-badge{position:absolute;bottom:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:8px;border:2px solid var(--bg);}
@@ -263,6 +264,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .online-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:12px;padding:3px 10px;font-size:11px;color:var(--green);font-weight:700;margin-bottom:12px;}
 .online-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes marquee{0%{transform:translateX(100vw);}100%{transform:translateX(-100%);}}
 </style>
 </head>
 <body>
@@ -270,8 +272,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <!-- SPLASH -->
 <div id="splash">
   <div class="sp-logo">🎵</div>
-  <div class="sp-name">Musikku</div>
-  <div class="sp-sub">BY ADMIN · UNTUK SEMUA</div>
+  <div class="sp-name">Musik 2026</div>
+  <div class="sp-sub" style="font-family:'Bubblegum Sans',cursive;font-size:15px;color:#ff6584;">Buatan: Aldi Saha 😎</div>
   <div class="sp-bar"><div class="sp-fill"></div></div>
 </div>
 
@@ -293,7 +295,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div class="hrow">
       <div class="logo-btn" onclick="switchTab('home')">
         <div class="logo-icon">🎵</div>
-        <div class="logo-text">Musik<span>ku</span></div>
+        <div class="logo-text" style="font-family:'Bubblegum Sans',cursive;">Musik<span>2026</span></div>
       </div>
       <div class="h-actions">
         <button class="hbtn" id="searchToggleBtn" onclick="toggleSearch()">🔍</button>
@@ -315,6 +317,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
   </header>
 
+  <!-- RUNNING TEXT -->
+  <div style="background:linear-gradient(90deg,var(--accent),var(--accent2));padding:6px 0;overflow:hidden;flex-shrink:0;">
+    <div style="white-space:nowrap;animation:marquee 20s linear infinite;display:inline-block;font-size:12px;font-weight:700;color:#fff;padding:0 20px;">
+      🚀 Musik 2026 masih dalam tahap pengembangan &nbsp;•&nbsp; Fitur baru terus ditambahkan &nbsp;•&nbsp; Terima kasih sudah menggunakan Musik 2026! &nbsp;•&nbsp; Buatan Aldi Saha 😎 &nbsp;•&nbsp; 🎵 Nikmati musiknya! &nbsp;&nbsp;&nbsp;&nbsp;
+    </div>
+  </div>
   <div class="pages">
     <!-- HOME -->
     <div class="page active" id="page-home">
@@ -343,6 +351,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
           <input class="form-input" type="text" id="reqNameInput" placeholder="Nama kamu...">
         </div>
         <button class="submit-btn" style="background:linear-gradient(135deg,var(--accent2),var(--accent));" onclick="submitRequest()">🎤 Kirim Request</button>
+      </div>
+
+      <div class="sec"><em>💬</em> Feedback & Saran</div>
+      <div style="background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">PESAN KAMU</label>
+          <textarea class="form-input" id="feedbackInput" placeholder="Tulis feedback atau saran kamu..." rows="3" style="resize:none;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">NAMA (opsional)</label>
+          <input class="form-input" type="text" id="feedbackNameInput" placeholder="Nama kamu...">
+        </div>
+        <button class="submit-btn" style="background:linear-gradient(135deg,var(--accent3),var(--accent));" onclick="submitFeedback()">💬 Kirim Feedback</button>
       </div>
 
       <div class="sec"><em>🔥</em> Sering Diputar</div>
@@ -422,6 +443,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         </div>
         <input type="file" id="adminFileInput" accept="audio/*" multiple onchange="adminAddSongs(this)">
 
+        <div class="form-group">
+          <label class="form-label">COVER FOTO (opsional)</label>
+          <input type="file" id="coverInput" accept="image/*" class="form-input" style="padding:8px;">
+        </div>
         <div class="form-group">
           <label class="form-label">NAMA ARTIS (opsional)</label>
           <input class="form-input" type="text" id="artistInput" placeholder="Nama artis / band">
@@ -534,7 +559,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 // FIREBASE + CLOUDINARY CONFIG
 // ==============================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAlqKxBvqB2LmX5rJJxCRK7fqkLpDq3yzg",
@@ -628,6 +653,7 @@ async function saveSongToFirestore(song) {
     artist: song.artist,
     genre: song.genre,
     url: song.url,
+    coverUrl: song.coverUrl || '',
     plays: song.plays || 0,
     addedAt: song.addedAt || Date.now(),
     duration: song.duration || 0
@@ -724,11 +750,30 @@ function adminAddSongs(input){
   input.value='';
 }
 
+async function uploadCoverToCloudinary(file) {
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  var res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) throw new Error('Upload cover gagal');
+  var data = await res.json();
+  return data.secure_url;
+}
+
 async function confirmUpload(){
   if(!pendingFiles.length){ showToast('⚠️ Pilih file musik dulu!'); return; }
   if(isUploading){ showToast('⏳ Sedang upload, tunggu dulu!'); return; }
   var artist=document.getElementById('artistInput').value.trim()||'Unknown Artist';
   var genre=document.getElementById('genreInput').value;
+  var coverFile = document.getElementById('coverInput') ? document.getElementById('coverInput').files[0] : null;
+  var coverUrl = '';
+  if(coverFile){
+    try{ coverUrl = await uploadCoverToCloudinary(coverFile); }catch(e){}
+    if(document.getElementById('coverInput')) document.getElementById('coverInput').value='';
+  }
   var validFiles=pendingFiles.filter(function(f){
     return f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac|aac)$/i);
   });
@@ -748,7 +793,7 @@ async function confirmUpload(){
       var parts=f.name.replace(/\.[^.]+$/,'').split(' - ');
       var title=parts.length>1?parts[1].trim():parts[0].trim();
       var art=parts.length>1?parts[0].trim():artist;
-      var song={id:Date.now()+'_'+i,title:title,artist:art,genre:genre,url:cloudUrl,plays:0,addedAt:Date.now(),duration:0};
+      var song={id:Date.now()+'_'+i,title:title,artist:art,genre:genre,url:cloudUrl,coverUrl:coverUrl,plays:0,addedAt:Date.now(),duration:0};
       await new Promise(function(resolve){
         var tmp=new Audio(cloudUrl);
         tmp.addEventListener('loadedmetadata',function(){ song.duration=tmp.duration; resolve(); });
@@ -844,8 +889,9 @@ function renderHome(){
 
 function songCardHTML(s, realIdx){
   var isCurr=realIdx===currentIdx;
+  var artContent = s.coverUrl ? '<img src="'+s.coverUrl+'" alt="cover">'+(isCurr?'<div class="now-badge">♪</div>':'') : emoji(realIdx)+(isCurr?'<div class="now-badge">♪</div>':'');
   return '<div class="song-card'+(isCurr?' now-playing':'')+'" id="sc-'+realIdx+'">'+
-    '<div class="song-art'+(isCurr&&isPlaying?' spin':'')+'">'+emoji(realIdx)+(isCurr?'<div class="now-badge">♪</div>':'')+
+    '<div class="song-art'+(isCurr&&isPlaying&&!s.coverUrl?' spin':'')+'">'+artContent+
     '</div>'+
     '<div class="song-info" onclick="loadSong('+realIdx+')">'+
       '<div class="song-title">'+esc(s.title)+'</div>'+
@@ -1148,6 +1194,46 @@ window.addEventListener('appinstalled',function(){ showToast('🎉 Musikku terin
 // ==============================
 var lt=0;
 document.addEventListener('touchend',function(e){ var n=Date.now(); if(n-lt<300) e.preventDefault(); lt=n; },{passive:false});
+
+// ==============================
+// FEEDBACK
+// ==============================
+window.submitFeedback = async function() {
+  var msg = document.getElementById('feedbackInput') ? document.getElementById('feedbackInput').value.trim() : '';
+  var name = document.getElementById('feedbackNameInput') ? document.getElementById('feedbackNameInput').value.trim() : '';
+  if(!msg){ showToast('⚠️ Tulis feedback dulu!'); return; }
+  try{
+    await addDoc(collection(db, 'feedbacks'), {
+      message: msg,
+      name: name || 'Anonim',
+      sentAt: Date.now()
+    });
+    document.getElementById('feedbackInput').value='';
+    if(document.getElementById('feedbackNameInput')) document.getElementById('feedbackNameInput').value='';
+    showToast('✅ Feedback terkirim! Makasih 😊');
+  }catch(e){
+    showToast('❌ Gagal kirim: '+e.message);
+  }
+}
+
+// ==============================
+// EDIT LAGU
+// ==============================
+window.editSong = async function(docId, currentTitle, currentArtist) {
+  var newTitle = prompt('Edit judul lagu:', currentTitle);
+  if(newTitle === null) return;
+  var newArtist = prompt('Edit nama artis:', currentArtist);
+  if(newArtist === null) return;
+  try {
+    await updateDoc(doc(db, 'songs', docId), {
+      title: newTitle.trim() || currentTitle,
+      artist: newArtist.trim() || currentArtist
+    });
+    showToast('✅ Lagu berhasil diedit!');
+  } catch(e) {
+    showToast('❌ Gagal edit: '+e.message);
+  }
+}
 
 // ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
