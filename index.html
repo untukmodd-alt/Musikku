@@ -989,7 +989,7 @@ function songCardHTML(s, realIdx){
   return '<div class="song-card'+(isCurr?' now-playing':'')+'" id="sc-'+realIdx+'">'+
     '<div class="song-art'+(isCurr&&isPlaying&&!s.coverUrl?' spin':'')+'">'+artContent+
     '</div>'+
-    '<div class="song-info" onclick="loadSong('+realIdx+')">'+
+    '<div class="song-info" onclick="loadSong('+realIdx+',true)">'+
       '<div class="song-title">'+esc(s.title)+'</div>'+
       '<div class="song-meta"><span>'+esc(s.artist)+'</span><span>'+esc(s.genre)+'</span>'+(s.duration?'<span>'+fmtTime(s.duration)+'</span>':'')+'</div>'+
     '</div>'+
@@ -1066,7 +1066,7 @@ function renderQueue(){
 // ==============================
 // PLAYBACK
 // ==============================
-function loadSong(idx){
+function loadSong(idx, openFull){
   if(idx<0||idx>=songs.length) return;
   var s=songs[idx];
   if(!s.url){ showToast('⚠️ File tidak tersedia. Upload ulang di Admin.'); return; }
@@ -1074,6 +1074,7 @@ function loadSong(idx){
   if(currentIdx===idx){
     audio.currentTime=0;
     audio.play().then(function(){ isPlaying=true; updatePlayUI(); }).catch(function(){});
+    if(openFull) openFullPlayer();
     return;
   }
   currentIdx=idx;
@@ -1086,10 +1087,17 @@ function loadSong(idx){
     saveSongs();
     updatePlayUI();
     renderAll();
+    if(openFull) openFullPlayer();
   }).catch(function(e){
     showToast('❌ Gagal memutar: '+e.message);
   });
   document.getElementById('miniPlayer').style.display='block';
+}
+
+function openFullPlayer(){
+  renderQueue();
+  document.getElementById('fullPlayer').style.display='flex';
+  updatePlayUI();
 }
 
 function togglePlay(){
