@@ -332,6 +332,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="hscroll" id="newSongsScroll"></div>
       <div class="sec"><em>🎸</em> Genre</div>
       <div class="chips" id="genreChips"></div>
+      <div class="sec"><em>🎤</em> Request Lagu</div>
+      <div style="background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">JUDUL LAGU YANG DIREQUEST</label>
+          <input class="form-input" type="text" id="reqSongInput" placeholder="Contoh: Judul Lagu - Nama Artis">
+        </div>
+        <div class="form-group">
+          <label class="form-label">NAMA KAMU (opsional)</label>
+          <input class="form-input" type="text" id="reqNameInput" placeholder="Nama kamu...">
+        </div>
+        <button class="submit-btn" style="background:linear-gradient(135deg,var(--accent2),var(--accent));" onclick="submitRequest()">🎤 Kirim Request</button>
+      </div>
+
       <div class="sec"><em>🔥</em> Sering Diputar</div>
       <div id="topSongsList"></div>
     </div>
@@ -437,6 +450,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         </div>
 
         <div style="height:16px;"></div>
+        <div class="sec" style="justify-content:space-between;"><span><em>🎤</em> Request dari Pendengar</span><button class="hbtn" style="font-size:11px;width:auto;padding:4px 10px;" onclick="loadRequests()">Refresh</button></div>
+        <div id="requestList"><div class="empty"><div class="ei">📋</div><h3>Tap Refresh</h3></div></div>
+
+        <div style="height:16px;"></div>
         <div class="sec"><em>🔑</em> Ganti PIN</div>
         <div class="form-group">
           <label class="form-label">PIN BARU (4 digit)</label>
@@ -512,7 +529,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div id="toast"></div>
 <audio id="audio"></audio>
 
-<script>
+<script type="module">
+// ==============================
+// FIREBASE + CLOUDINARY CONFIG
+// ==============================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAlqKxBvqB2LmX5rJJxCRK7fqkLpDq3yzg",
+  authDomain: "musikku-364eb.firebaseapp.com",
+  projectId: "musikku-364eb",
+  storageBucket: "musikku-364eb.firebasestorage.app",
+  messagingSenderId: "622841169824",
+  appId: "1:622841169824:web:c95ee04dcb020f273b86c5"
+};
+
+const CLOUDINARY_CLOUD = "dswwmerub";
+const CLOUDINARY_UPLOAD_PRESET = "musikku_unsigned";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // ==============================
 // STATE
 // ==============================
@@ -520,24 +558,19 @@ var songs = [];
 var currentIdx = -1;
 var isPlaying = false;
 var shuffleOn = false;
-var repeatMode = 0; // 0=off,1=all,2=one
+var repeatMode = 0;
 var playedCount = 0;
 var favs = {};
 var adminPin = '1234';
 var pinBuf = '';
 var pendingFiles = [];
 var deferredInstall = null;
+var isUploading = false;
 
 var audio = document.getElementById('audio');
 
-// Load saved data
+// Load local prefs
 try {
-  var saved = localStorage.getItem('musikku_songs');
-  if (saved) {
-    var parsed = JSON.parse(saved);
-    // We only save metadata, not blob URLs (they expire)
-    songs = parsed.map(function(s){ return Object.assign(s,{url:'',_saved:true}); });
-  }
   var savedFavs = localStorage.getItem('musikku_favs');
   if (savedFavs) favs = JSON.parse(savedFavs);
   var savedPin = localStorage.getItem('musikku_pin');
@@ -545,6 +578,74 @@ try {
   var savedCount = localStorage.getItem('musikku_played');
   if (savedCount) playedCount = parseInt(savedCount)||0;
 } catch(e){}
+
+// ==============================
+// CLOUDINARY UPLOAD
+// ==============================
+async function uploadToCloudinary(file) {
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('resource_type', 'video'); // audio pakai resource_type video di Cloudinary
+
+  var res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/video/upload', {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) throw new Error('Upload gagal');
+  var data = await res.json();
+  return data.secure_url;
+}
+
+// ==============================
+// FIRESTORE FUNCTIONS
+// ==============================
+async function loadSongsFromFirestore() {
+  try {
+    var q = query(collection(db, 'songs'), orderBy('addedAt', 'desc'));
+    onSnapshot(q, function(snapshot) {
+      songs = snapshot.docs.map(function(d) {
+        return Object.assign({ _docId: d.id }, d.data());
+      });
+      renderAll();
+      showToast('🎵 ' + songs.length + ' lagu loaded!');
+    });
+  } catch(e) {
+    showToast('⚠️ Gagal load lagu: ' + e.message);
+  }
+}
+
+async function saveSongToFirestore(song) {
+  var meta = {
+    id: song.id,
+    title: song.title,
+    artist: song.artist,
+    genre: song.genre,
+    url: song.url,
+    plays: song.plays || 0,
+    addedAt: song.addedAt || Date.now(),
+    duration: song.duration || 0
+  };
+  var docRef = await addDoc(collection(db, 'songs'), meta);
+  return docRef.id;
+}
+
+async function deleteSongFromFirestore(docId) {
+  await deleteDoc(doc(db, 'songs', docId));
+}
+
+async function saveRequestToFirestore(songTitle, requesterName) {
+  await addDoc(collection(db, 'requests'), {
+    songTitle: songTitle,
+    requesterName: requesterName || 'Anonim',
+    requestedAt: Date.now(),
+    status: 'pending'
+  });
+}
+
+function saveFavs(){
+  try{ localStorage.setItem('musikku_favs',JSON.stringify(favs)); }catch(e){}
+}
 
 // ==============================
 // HELPERS
@@ -619,58 +720,68 @@ function adminAddSongs(input){
   input.value='';
 }
 
-function confirmUpload(){
+async function confirmUpload(){
   if(!pendingFiles.length){ showToast('⚠️ Pilih file musik dulu!'); return; }
+  if(isUploading){ showToast('⏳ Sedang upload, tunggu dulu!'); return; }
   var artist=document.getElementById('artistInput').value.trim()||'Unknown Artist';
   var genre=document.getElementById('genreInput').value;
-  var added=0;
-  pendingFiles.forEach(function(f){
-    if(!f.type.startsWith('audio/') && !f.name.match(/\.(mp3|wav|ogg|m4a|flac|aac)$/i)) return;
-    var url=URL.createObjectURL(f);
-    var parts=f.name.replace(/\.[^.]+$/,'').split(' - ');
-    var title=parts.length>1?parts[1].trim():parts[0].trim();
-    var art=parts.length>1?parts[0].trim():artist;
-    var song={id:Date.now()+'_'+added,title:title,artist:art,genre:genre,url:url,plays:0,addedAt:Date.now()};
-    songs.push(song);
-    // Get duration
-    (function(s,idx){
-      var tmp=new Audio(url);
-      tmp.addEventListener('loadedmetadata',function(){
-        songs[idx].duration=tmp.duration;
-        renderAll();
-      });
-    })(song,songs.length-1);
-    added++;
+  var validFiles=pendingFiles.filter(function(f){
+    return f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac|aac)$/i);
   });
+  if(!validFiles.length){ showToast('⚠️ File tidak valid!'); return; }
+
+  isUploading=true;
+  var btn=document.querySelector('.submit-btn');
+  if(btn){ btn.textContent='⏳ Mengupload...'; btn.disabled=true; }
+  showToast('☁️ Mengupload '+validFiles.length+' lagu ke cloud...');
+
+  var added=0;
+  for(var i=0;i<validFiles.length;i++){
+    var f=validFiles[i];
+    try{
+      showToast('☁️ Upload '+(i+1)+'/'+validFiles.length+': '+f.name.slice(0,25)+'...');
+      var cloudUrl=await uploadToCloudinary(f);
+      var parts=f.name.replace(/\.[^.]+$/,'').split(' - ');
+      var title=parts.length>1?parts[1].trim():parts[0].trim();
+      var art=parts.length>1?parts[0].trim():artist;
+      var song={id:Date.now()+'_'+i,title:title,artist:art,genre:genre,url:cloudUrl,plays:0,addedAt:Date.now(),duration:0};
+      await new Promise(function(resolve){
+        var tmp=new Audio(cloudUrl);
+        tmp.addEventListener('loadedmetadata',function(){ song.duration=tmp.duration; resolve(); });
+        tmp.addEventListener('error',function(){ resolve(); });
+        setTimeout(resolve,3000);
+      });
+      await saveSongToFirestore(song);
+      added++;
+    }catch(e){
+      showToast('❌ Gagal upload '+f.name.slice(0,20)+': '+e.message);
+    }
+  }
+
   pendingFiles=[];
+  isUploading=false;
   document.getElementById('artistInput').value='';
-  saveSongs();
-  renderAll();
-  renderAdminList();
-  if(added>0) showToast('✅ '+added+' lagu berhasil diupload!');
-  else showToast('⚠️ File tidak valid!');
+  if(btn){ btn.textContent='📤 Upload ke Musikku'; btn.disabled=false; }
+  if(added>0) showToast('✅ '+added+' lagu berhasil diupload ke cloud!');
 }
 
-function adminDeleteSong(id){
+async function adminDeleteSong(id){
   var idx=songs.findIndex(function(s){return s.id===id;});
   if(idx<0) return;
   if(!confirm('Hapus "'+songs[idx].title+'"?')) return;
-  URL.revokeObjectURL(songs[idx].url);
+  var docId=songs[idx]._docId;
   if(currentIdx===idx){ audio.src=''; isPlaying=false; currentIdx=-1; document.getElementById('miniPlayer').style.display='none'; }
   else if(currentIdx>idx) currentIdx--;
-  songs.splice(idx,1);
-  saveSongs();
-  renderAll();
-  renderAdminList();
-  showToast('🗑️ Lagu dihapus');
+  try{
+    await deleteSongFromFirestore(docId);
+    showToast('🗑️ Lagu dihapus dari cloud!');
+  }catch(e){
+    showToast('❌ Gagal hapus: '+e.message);
+  }
 }
 
 function saveSongs(){
-  try{
-    var meta=songs.map(function(s){ return {id:s.id,title:s.title,artist:s.artist,genre:s.genre,plays:s.plays,addedAt:s.addedAt,duration:s.duration||0}; });
-    localStorage.setItem('musikku_songs',JSON.stringify(meta));
-    localStorage.setItem('musikku_played',String(playedCount));
-  }catch(e){}
+  try{ localStorage.setItem('musikku_played',String(playedCount)); }catch(e){}
 }
 
 function saveFavs(){
@@ -1031,12 +1142,54 @@ document.addEventListener('touchend',function(e){ var n=Date.now(); if(n-lt<300)
 // ==============================
 // INIT
 // ==============================
+// ==============================
+// REQUEST LAGU
+// ==============================
+window.submitRequest = async function() {
+  var songTitle = document.getElementById('reqSongInput') ? document.getElementById('reqSongInput').value.trim() : '';
+  var requesterName = document.getElementById('reqNameInput') ? document.getElementById('reqNameInput').value.trim() : '';
+  if(!songTitle){ showToast('⚠️ Masukkan judul lagu dulu!'); return; }
+  try{
+    await saveRequestToFirestore(songTitle, requesterName);
+    document.getElementById('reqSongInput').value='';
+    if(document.getElementById('reqNameInput')) document.getElementById('reqNameInput').value='';
+    showToast('✅ Request terkirim ke Admin!');
+  }catch(e){
+    showToast('❌ Gagal kirim request: '+e.message);
+  }
+}
+
+window.loadRequests = async function() {
+  try{
+    var q = query(collection(db, 'requests'), orderBy('requestedAt', 'desc'));
+    var snap = await getDocs(q);
+    var el = document.getElementById('requestList');
+    if(!el) return;
+    if(snap.empty){ el.innerHTML='<div class="empty"><div class="ei">📋</div><h3>Belum ada request</h3></div>'; return; }
+    el.innerHTML = snap.docs.map(function(d){
+      var r=d.data();
+      var t=new Date(r.requestedAt);
+      return '<div class="admin-song-row"><div class="a-info"><div class="a-title">🎵 '+esc(r.songTitle)+'</div><div class="a-meta">dari '+esc(r.requesterName||'Anonim')+' • '+t.toLocaleDateString("id-ID")+'</div></div><button class="del-btn" onclick="deleteRequest(\''+d.id+'\')">🗑️</button></div>';
+    }).join('');
+  }catch(e){ showToast('❌ Gagal load request'); }
+}
+
+window.deleteRequest = async function(docId){
+  try{
+    await deleteDoc(doc(db, 'requests', docId));
+    loadRequests();
+    showToast('✅ Request dihapus');
+  }catch(e){}
+}
+
+// ==============================
+// INIT
+// ==============================
 setTimeout(function(){
   var sp=document.getElementById('splash');
   sp.classList.add('hide');
   setTimeout(function(){ sp.style.display='none'; },500);
-  renderAll();
-  // Register service worker
+  loadSongsFromFirestore();
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(function(){});
   }
