@@ -602,6 +602,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </button>
     </div>
     
+    <!-- Tombol download -->
+    <button id="fpDownloadBtn" onclick="downloadCurrentSong()" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;margin-bottom:12px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Lagu
+    </button>
+
     <!-- Edit lagu khusus admin -->
     <div id="fpEditBtn" style="display:none;margin-bottom:16px;">
       <button onclick="editCurrentSong()" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;">
@@ -1483,8 +1489,28 @@ window.confirmUpload = confirmUpload;
 window.adminDeleteSong = adminDeleteSong;
 
 // ==============================
-// INIT
+// DOWNLOAD LAGU
 // ==============================
+window.downloadSong = function(id) {
+  var s = songs.find(function(x){ return x.id===id; });
+  if(!s || !s.url){ showToast('⚠️ URL tidak tersedia!'); return; }
+  // Tambah fl_attachment di URL Cloudinary biar langsung download
+  var url = s.url.replace('/upload/', '/upload/fl_attachment/');
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (s.title||'lagu') + ' - ' + (s.artist||'unknown') + '.mp3';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('⬇️ Download dimulai!');
+}
+
+window.downloadCurrentSong = async function() {
+  if(currentIdx < 0){ showToast('⚠️ Tidak ada lagu yang diputar!'); return; }
+  downloadSong(songs[currentIdx].id);
+}
+
 // ==============================
 // REQUEST LAGU
 // ==============================
