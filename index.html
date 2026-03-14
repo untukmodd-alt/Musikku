@@ -686,6 +686,7 @@ function updatePinDots(){
 }
 function checkPin(){
   if(pinBuf===adminPin){
+    localStorage.setItem('musikku_admin_logged','1');
     document.getElementById('adminGate').style.display='none';
     document.getElementById('adminPanel').classList.add('show');
     renderAdminList();
@@ -696,6 +697,7 @@ function checkPin(){
   }
 }
 function adminLogout(){
+  localStorage.removeItem('musikku_admin_logged');
   document.getElementById('adminGate').style.display='block';
   document.getElementById('adminPanel').classList.remove('show');
   pinBuf=''; updatePinDots();
@@ -1102,7 +1104,13 @@ function switchTab(name){
   if(map[name]!==undefined&&tabs[map[name]]) tabs[map[name]].classList.add('active');
   if(name==='fav') renderFavList();
   if(name==='stats') renderStats();
-  if(name==='admin') renderAdminList();
+  if(name==='admin'){
+    if(localStorage.getItem('musikku_admin_logged')==='1'){
+      document.getElementById('adminGate').style.display='none';
+      document.getElementById('adminPanel').classList.add('show');
+    }
+    renderAdminList();
+  }
 }
 
 // ==============================
