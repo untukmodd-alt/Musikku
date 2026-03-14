@@ -325,7 +325,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
       <div class="h-actions">
         <button class="hbtn" id="searchToggleBtn" onclick="toggleSearch()">🔍</button>
-        <button class="hbtn" onclick="switchTab('admin')" title="Admin">⚙️</button>
+        <button class="hbtn" id="adminHeaderBtn" style="display:none;" onclick="switchTab('admin')" title="Admin">⚙️</button>
         <button class="hbtn" onclick="openUserPanel()" title="Pengguna" style="display:flex;flex-direction:column;align-items:center;width:auto;padding:4px 8px;height:auto;gap:1px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span style="font-size:8px;font-weight:700;">Pengguna</span>
@@ -344,7 +344,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="tab" onclick="switchTab('album')">💿 Album</button>
       <button class="tab" onclick="switchTab('fav')">❤️ Favorit</button>
       <button class="tab" onclick="switchTab('stats')">📊 Stats</button>
-      <button class="tab" onclick="switchTab('admin')">⚙️ Admin</button>
+      <button class="tab" id="adminTab" style="display:none;" onclick="switchTab('admin')">⚙️ Admin</button>
     </div>
   </header>
 
@@ -839,6 +839,7 @@ function checkPin(){
     localStorage.setItem('musikku_admin_logged','1');
     document.getElementById('adminGate').style.display='none';
     document.getElementById('adminPanel').classList.add('show');
+    showAdminUI(true);
     renderAdminList();
     showToast('✅ Selamat datang Admin!');
   } else {
@@ -847,10 +848,20 @@ function checkPin(){
   }
 }
 function adminLogout(){
+  if(!confirm('Yakin mau keluar dari Admin?')) return;
   localStorage.removeItem('musikku_admin_logged');
   document.getElementById('adminGate').style.display='block';
   document.getElementById('adminPanel').classList.remove('show');
+  showAdminUI(false);
   pinBuf=''; updatePinDots();
+  switchTab('home');
+}
+
+function showAdminUI(show){
+  var adminTab = document.getElementById('adminTab');
+  var adminBtn = document.getElementById('adminHeaderBtn');
+  if(adminTab) adminTab.style.display = show ? 'block' : 'none';
+  if(adminBtn) adminBtn.style.display = show ? 'flex' : 'none';
 }
 function changePin(){
   var np=String(document.getElementById('newPinInput').value).trim();
@@ -1050,7 +1061,7 @@ function renderHome(){
 
 function songCardHTML(s, realIdx){
   var isCurr=realIdx===currentIdx;
-  var artContent = s.coverUrl ? '<img src="'+s.coverUrl+'" alt="cover">'+(isCurr?'<div class="now-badge">♪</div>':'') : emoji(realIdx)+(isCurr?'<div class="now-badge">♪</div>':'');
+  var artContent = s.coverUrl ? '<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" alt="cover">'+(isCurr?'<div class="now-badge">♪</div>':'') : emoji(realIdx)+(isCurr?'<div class="now-badge">♪</div>':'');
   return '<div class="song-card'+(isCurr?' now-playing':'')+'" id="sc-'+realIdx+'">'+
     '<div class="song-art'+(isCurr&&isPlaying&&!s.coverUrl?' spin':'')+'">'+artContent+
     '</div>'+
@@ -1585,7 +1596,8 @@ window.openUserPanel = function(){
     
     var profileBar = document.createElement('div');
     profileBar.className = 'user-profile-bar';
-    profileBar.innerHTML = '<div class="user-avatar-big">'+currentUser.avatar+'</div>'+
+    var avatarHtml2 = (currentUser.avatar && currentUser.avatar.startsWith('http')) ? '<img src="'+currentUser.avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : currentUser.avatar;
+    profileBar.innerHTML = '<div class="user-avatar-big" style="overflow:hidden;">'+avatarHtml2+'</div>'+
       '<div><div style="font-size:16px;font-weight:800;">'+currentUser.name+'</div>'+
       '<div class="user-tag">'+currentUser.tag+'</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+(currentUser.songCount||0)+'/25 lagu diupload</div></div>';
@@ -1615,7 +1627,27 @@ window.openUserPanel = function(){
     // Avatar picker
     var avatarCenter = document.createElement('div');
     avatarCenter.style.cssText = 'text-align:center;margin-bottom:16px;';
-    avatarCenter.innerHTML = '<div id="selectedAvatar" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 8px;">😊</div><div style="font-size:12px;color:var(--muted);">Pilih avatar</div>';
+    
+    var photoInput = document.createElement('input');
+    photoInput.type = 'file';
+    photoInput.id = 'profilePhotoInput';
+    photoInput.accept = 'image/*';
+    photoInput.style.display = 'none';
+    photoInput.onchange = function(){ previewProfilePhoto(this); };
+    
+    var bigAvatar = document.createElement('div');
+    bigAvatar.id = 'selectedAvatar';
+    bigAvatar.style.cssText = 'width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 8px;overflow:hidden;cursor:pointer;';
+    bigAvatar.textContent = '😊';
+    bigAvatar.onclick = function(){ photoInput.click(); };
+    
+    var hint = document.createElement('div');
+    hint.style.cssText = 'font-size:12px;color:var(--muted);margin-bottom:4px;';
+    hint.textContent = 'Ketuk untuk ganti foto';
+    
+    avatarCenter.appendChild(bigAvatar);
+    avatarCenter.appendChild(hint);
+    avatarCenter.appendChild(photoInput);
     box.appendChild(avatarCenter);
     
     var grid = document.createElement('div');
@@ -1646,20 +1678,46 @@ window.openUserPanel = function(){
 }
 
 var selectedAvatarEmoji = '😊';
+var selectedAvatarFile = null;
+
 window.selectAvatar = function(emoji, idx){
   selectedAvatarEmoji = emoji;
+  selectedAvatarFile = null;
   document.querySelectorAll('.avatar-opt').forEach(function(el){ el.classList.remove('selected'); });
   var el = document.getElementById('av'+idx);
   if(el) el.classList.add('selected');
   var big = document.getElementById('selectedAvatar');
-  if(big) big.textContent = emoji;
+  if(big){ big.textContent = emoji; big.style.fontSize = '40px'; }
+}
+
+window.previewProfilePhoto = function(input){
+  var file = input.files[0];
+  if(!file) return;
+  selectedAvatarFile = file;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var big = document.getElementById('selectedAvatar');
+    if(big){
+      big.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;">';
+      big.style.fontSize = '0';
+    }
+    document.querySelectorAll('.avatar-opt').forEach(function(el){ el.classList.remove('selected'); });
+  };
+  reader.readAsDataURL(file);
 }
 
 window.confirmRegister = async function(){
   var name = document.getElementById('userNameInp').value.trim();
   if(!name){ showToast('⚠️ Masukkan nama dulu!'); return; }
   showToast('⏳ Mendaftar...');
-  var u = await registerUser(name, selectedAvatarEmoji);
+  var avatarVal = selectedAvatarEmoji;
+  if(selectedAvatarFile){
+    try{
+      showToast('☁️ Upload foto profil...');
+      avatarVal = await uploadCoverToCloudinary(selectedAvatarFile);
+    }catch(e){ avatarVal = selectedAvatarEmoji; }
+  }
+  var u = await registerUser(name, avatarVal);
   
   // Popup selamat datang
   var modal = document.createElement('div');
@@ -1670,8 +1728,12 @@ window.confirmRegister = async function(){
   box.style.cssText = 'background:var(--bg2);border-radius:20px;padding:28px;max-width:320px;width:100%;text-align:center;border:1px solid var(--border);';
   
   var avatarEl = document.createElement('div');
-  avatarEl.style.cssText = 'font-size:60px;margin-bottom:12px;';
-  avatarEl.textContent = u.avatar;
+  avatarEl.style.cssText = 'width:80px;height:80px;border-radius:50%;margin:0 auto 12px;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:40px;';
+  if(u.avatar && u.avatar.startsWith('http')){
+    avatarEl.innerHTML = '<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;">';
+  } else {
+    avatarEl.textContent = u.avatar;
+  }
   
   var nameEl = document.createElement('div');
   nameEl.style.cssText = 'font-size:20px;font-weight:900;margin-bottom:4px;';
@@ -1724,6 +1786,47 @@ window.showUserUpload = function(){
 // ==============================
 // ALBUM LIST
 // ==============================
+async function renderAlbumList(){
+  renderAdminAlbums();
+  var el = document.getElementById('albumList');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">⏳ Loading...</div>';
+  try{
+    var snap = await getDocs(collection(db, 'users'));
+    if(snap.empty){ 
+      el.innerHTML = '<div class="empty"><div class="ei">💿</div><h3>Belum ada album</h3><p>User belum upload lagu apapun.</p></div>'; 
+      return; 
+    }
+    var users = snap.docs.map(function(d){ return Object.assign({_docId:d.id}, d.data()); });
+    el.innerHTML = '';
+    var hasAlbum = false;
+    users.forEach(function(u){
+      var userSongs = songs.filter(function(s){ return s.uploadedBy === u.deviceId; });
+      if(!userSongs.length) return;
+      hasAlbum = true;
+      var card = document.createElement('div');
+      card.className = 'album-user-card';
+      card.onclick = (function(uid, uname, uavatar, utag){ 
+        return function(){ openUserAlbum(uid, uname, uavatar, utag); };
+      })(u.deviceId, u.name, u.avatar, u.tag);
+      var previewHtml = userSongs.slice(0,4).map(function(s){
+        var idx = songs.indexOf(s);
+        return '<div style="flex-shrink:0;width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;">'+(s.coverUrl?'<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">':emoji(idx))+'</div>';
+      }).join('');
+      var avatarHtml = (u.avatar && u.avatar.startsWith('http')) ? '<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : u.avatar;
+      card.innerHTML = '<div class="auc-header"><div class="auc-avatar" style="overflow:hidden;">'+avatarHtml+'</div>'+
+        '<div><div class="auc-name">Album dari '+esc(u.name)+'</div>'+
+        '<div class="auc-tag">'+esc(u.tag)+'</div>'+
+        '<div class="auc-count">'+userSongs.length+' lagu</div></div></div>'+
+        '<div style="display:flex;gap:8px;overflow-x:auto;">'+previewHtml+'</div>';
+      el.appendChild(card);
+    });
+    if(!hasAlbum) el.innerHTML = '<div class="empty"><div class="ei">💿</div><h3>Belum ada album</h3><p>User belum upload lagu apapun.</p></div>';
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="ei">⚠️</div><h3>Gagal load</h3></div>';
+  }
+}
+
 function renderAdminAlbums(){
   var el = document.getElementById('adminAlbumList');
   if(!el) return;
@@ -1782,122 +1885,102 @@ window.openAdminAlbum = function(albumIdx){
   
   var modal = document.createElement('div');
   modal.id = 'adminAlbumModal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg);overflow-y:auto;';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99000;background:var(--bg);overflow-y:auto;';
   
-  var songsHtml = album.songs.map(function(s){
+  var wrap = document.createElement('div');
+  wrap.style.padding = '16px';
+  
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:20px;';
+  
+  var backBtn = document.createElement('button');
+  backBtn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:50%;min-width:36px;height:36px;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;';
+  backBtn.textContent = '←';
+  backBtn.onclick = function(){ modal.remove(); };
+  
+  var infoEl = document.createElement('div');
+  infoEl.innerHTML = '<div style="font-size:16px;font-weight:800;">'+album.emoji+' '+album.name+'</div>'+
+    '<div style="font-size:12px;color:var(--muted);">'+album.songs.length+' lagu</div>';
+  
+  header.appendChild(backBtn);
+  header.appendChild(infoEl);
+  wrap.appendChild(header);
+  
+  // Songs
+  album.songs.forEach(function(s){
     var idx = songs.indexOf(s);
-    var sid = 'asong_'+idx;
-    return '<div class="song-card" id="'+sid+'" data-idx="'+idx+'">'+
-      '<div class="song-art">'+(s.coverUrl?'<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">':emoji(idx))+'</div>'+
-      '<div class="song-info">'+
-        '<div class="song-title">'+esc(s.title)+'</div>'+
-        '<div class="song-meta"><span>'+esc(s.artist)+'</span><span>'+esc(s.genre)+'</span></div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+    var card = document.createElement('div');
+    card.className = 'song-card';
+    var artHtml = s.coverUrl ? '<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">' : emoji(idx);
+    card.innerHTML = '<div class="song-art">'+artHtml+'</div>'+
+      '<div class="song-info"><div class="song-title">'+esc(s.title)+'</div>'+
+      '<div class="song-meta"><span>'+esc(s.artist)+'</span><span>'+esc(s.genre)+'</span></div></div>';
+    card.onclick = (function(i){ return function(){ loadSong(i,true); modal.remove(); }; })(idx);
+    wrap.appendChild(card);
+  });
   
-  modal.innerHTML = '<div style="padding:16px;">'+
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'+
-      '<button id="closeAdminAlbumBtn" style="background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">←</button>'+
-      '<div><div style="font-size:16px;font-weight:800;">'+album.emoji+' '+album.name+'</div><div style="font-size:12px;color:var(--muted);">'+album.songs.length+' lagu</div></div>'+
-    '</div>'+
-    songsHtml+
-  '</div>';
+  modal.appendChild(wrap);
   document.body.appendChild(modal);
 }
-
-async function renderAlbumList(){
-  renderAdminAlbums();
-  var el = document.getElementById('albumList');
-  if(!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">⏳ Loading...</div>';
-  
-  try{
-    var snap = await getDocs(collection(db, 'users'));
-    if(snap.empty){ 
-      el.innerHTML = '<div class="empty"><div class="ei">💿</div><h3>Belum ada album</h3><p>Belum ada user yang upload lagu.</p></div>'; 
-      return; 
-    }
-    
-    var users = snap.docs.map(function(d){ return Object.assign({_docId:d.id}, d.data()); });
-    
-    // Hitung lagu per user dari songs array
-    el.innerHTML = '';
-    var hasAlbum = false;
-    users.forEach(function(u){
-      var userSongs = songs.filter(function(s){ return s.uploadedBy === u.deviceId; });
-      if(!userSongs.length) return;
-      hasAlbum = true;
-      
-      var card = document.createElement('div');
-      card.className = 'album-user-card';
-      card.onclick = (function(uid, uname, uavatar, utag){ 
-        return function(){ openUserAlbum(uid, uname, uavatar, utag); };
-      })(u.deviceId, u.name, u.avatar, u.tag);
-      
-      var previewHtml = userSongs.slice(0,4).map(function(s){
-        var idx = songs.indexOf(s);
-        return '<div style="flex-shrink:0;width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;">'+(s.coverUrl?'<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;">':emoji(idx))+'</div>';
-      }).join('');
-      
-      card.innerHTML = '<div class="auc-header"><div class="auc-avatar">'+u.avatar+'</div>'+
-        '<div><div class="auc-name">Album dari '+esc(u.name)+'</div>'+
-        '<div class="auc-tag">'+esc(u.tag)+'</div>'+
-        '<div class="auc-count">'+userSongs.length+' lagu</div></div></div>'+
-        '<div style="display:flex;gap:8px;overflow-x:auto;">'+previewHtml+'</div>';
-      
-      el.appendChild(card);
-    });
-    
-    if(!hasAlbum) el.innerHTML = '<div class="empty"><div class="ei">💿</div><h3>Belum ada album</h3></div>';
-  }catch(e){
-    el.innerHTML = '<div class="empty"><div class="ei">⚠️</div><h3>Gagal load</h3></div>';
-  }
-}
-
 window.openUserAlbum = function(deviceId, name, avatar, tag){
   var userSongs = songs.filter(function(s){ return s.uploadedBy === deviceId; });
-  var modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg);overflow-y:auto;';
-  var songsHtml = userSongs.map(function(s){
-    var idx = songs.indexOf(s);
-    var sid = 'usong_'+idx;
-    return '<div class="song-card" id="'+sid+'" data-idx="'+idx+'">'+
-      '<div class="song-art">'+(s.coverUrl?'<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">':emoji(idx))+'</div>'+
-      '<div class="song-info">'+
-        '<div class="song-title">'+esc(s.title)+'</div>'+
-        '<div class="song-meta"><span>'+esc(s.artist)+'</span></div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
   
+  var modal = document.createElement('div');
   modal.id = 'userAlbumModal';
-  modal.innerHTML = '<div style="padding:16px;">'+
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'+
-      '<button id="closeUserAlbumBtn" style="background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">←</button>'+
-      '<div class="auc-avatar">'+avatar+'</div>'+
-      '<div><div style="font-size:16px;font-weight:800;">Album dari '+name+'</div><div class="auc-tag">'+tag+' • '+userSongs.length+' lagu</div></div>'+
-    '</div>'+
-    songsHtml+
-  '</div>';
-  document.body.appendChild(modal);
-  var closeAABtn = document.getElementById('closeAdminAlbumBtn');
-  if(closeAABtn) closeAABtn.onclick = function(){ var m=document.getElementById('adminAlbumModal'); if(m) m.remove(); };
-  // Event delegation untuk song cards
-  modal.addEventListener('click', function(e){
-    var card = e.target.closest('.song-card[data-idx]');
-    if(card){
-      var idx = parseInt(card.getAttribute('data-idx'));
-      loadSong(idx, true);
-      var m = document.getElementById('adminAlbumModal');
-      if(m) m.remove();
-    }
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99000;background:var(--bg);overflow-y:auto;';
+  
+  var wrap = document.createElement('div');
+  wrap.style.padding = '16px';
+  
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:20px;';
+  
+  var backBtn = document.createElement('button');
+  backBtn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:50%;min-width:36px;height:36px;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;';
+  backBtn.textContent = '←';
+  backBtn.onclick = function(){ modal.remove(); };
+  
+  var avaEl = document.createElement('div');
+  avaEl.className = 'auc-avatar';
+  avaEl.style.overflow = 'hidden';
+  if(avatar && avatar.startsWith('http')){
+    avaEl.innerHTML = '<img src="'+avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    avaEl.textContent = avatar;
+  }
+  
+  var infoEl = document.createElement('div');
+  infoEl.innerHTML = '<div style="font-size:16px;font-weight:800;">Album dari '+esc(name)+'</div>'+
+    '<div class="auc-tag">'+esc(tag)+' • '+userSongs.length+' lagu</div>';
+  
+  header.appendChild(backBtn);
+  header.appendChild(avaEl);
+  header.appendChild(infoEl);
+  wrap.appendChild(header);
+  
+  // Songs
+  userSongs.forEach(function(s){
+    var idx = songs.indexOf(s);
+    var card = document.createElement('div');
+    card.className = 'song-card';
+    var artHtml = s.coverUrl ? '<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">' : emoji(idx);
+    card.innerHTML = '<div class="song-art">'+artHtml+'</div>'+
+      '<div class="song-info"><div class="song-title">'+esc(s.title)+'</div>'+
+      '<div class="song-meta"><span>'+esc(s.artist)+'</span></div></div>';
+    card.onclick = (function(i){ return function(){ loadSong(i,true); modal.remove(); }; })(idx);
+    wrap.appendChild(card);
   });
+  
+  modal.appendChild(wrap);
+  document.body.appendChild(modal);
 }
 
 // ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
 // ==============================
+window.showAdminUI = showAdminUI;
 window.switchTab = switchTab;
 window.toggleSearch = toggleSearch;
 window.doSearch = doSearch;
@@ -1970,11 +2053,21 @@ window.loadRequests = async function() {
     var el = document.getElementById('requestList');
     if(!el) return;
     if(snap.empty){ el.innerHTML='<div class="empty"><div class="ei">📋</div><h3>Belum ada request</h3></div>'; return; }
-    el.innerHTML = snap.docs.map(function(d){
+    el.innerHTML = '';
+    snap.docs.forEach(function(d){
       var r=d.data();
       var t=new Date(r.requestedAt);
-      return '<div class="admin-song-row"><div class="a-info"><div class="a-title">🎵 '+esc(r.songTitle)+'</div><div class="a-meta">dari '+esc(r.requesterName||'Anonim')+' • '+t.toLocaleDateString("id-ID")+'</div></div><button class="del-btn" onclick="deleteRequest(\''+d.id+'\')">🗑️</button></div>';
-    }).join('');
+      var row = document.createElement('div');
+      row.className = 'admin-song-row';
+      row.innerHTML = '<div class="a-info"><div class="a-title">🎵 '+esc(r.songTitle)+'</div>'+
+        '<div class="a-meta">dari '+esc(r.requesterName||'Anonim')+' • '+t.toLocaleDateString('id-ID')+'</div></div>';
+      var delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.textContent = '🗑️';
+      delBtn.onclick = (function(id){ return function(){ window.deleteRequest(id); }; })(d.id);
+      row.appendChild(delBtn);
+      el.appendChild(row);
+    });
   }catch(e){ showToast('❌ Gagal load request'); }
 }
 
@@ -1995,6 +2088,10 @@ setTimeout(function(){
   setTimeout(function(){ sp.style.display='none'; },500);
   loadUser();
   loadSongsFromFirestore();
+  // Tampilkan UI admin kalau sudah login
+  if(localStorage.getItem('musikku_admin_logged')==='1'){
+    showAdminUI(true);
+  }
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(function(){});
   }
