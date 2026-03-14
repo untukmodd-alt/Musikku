@@ -621,6 +621,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div class="fp-title" id="fpTitle">Pilih Lagu</div>
     <div class="fp-artist" id="fpArtist">—</div>
     <div class="fp-genre" id="fpGenre">—</div>
+    <div id="fpUploader" style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:12px;"></div>
     <div class="fp-fav" id="fpFav" onclick="toggleFavCurr()">🤍</div>
     <div class="prog-wrap">
       <div class="prog-bar" id="progBar" onclick="seekClick(event)">
@@ -780,7 +781,8 @@ async function saveSongToFirestore(song) {
     duration: song.duration || 0,
     uploadedBy: song.uploadedBy || 'admin',
     uploaderName: song.uploaderName || 'Admin',
-    uploaderAvatar: song.uploaderAvatar || '⚙️'
+    uploaderAvatar: song.uploaderAvatar || '⚙️',
+    uploadedByTag: song.uploadedByTag || ''
   };
   var docRef = await addDoc(collection(db, 'songs'), meta);
   return docRef.id;
@@ -1071,6 +1073,10 @@ function songCardHTML(s, realIdx){
     '</div>'+
     '<div class="song-actions">'+
       '<button class="s-btn fav-btn'+(favs[s.id]?' faved':'')+'" onclick="toggleFav(\''+s.id+'\')">♥</button>'+
+      '<button class="s-btn" onclick="downloadSong(\''+s.id+'\')" title="Download">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+      '</button>'+
+      (currentUser && s.uploadedBy === currentUser.deviceId ? '<button class="s-btn" style="color:var(--accent3);" id="uedit_'+s.id+'">✏️</button>' : '')+
     '</div>'+
   '</div>';
 }
@@ -1084,6 +1090,15 @@ function renderAllSongs(filter){
     return;
   }
   el.innerHTML=list.map(function(s){ return songCardHTML(s,songs.findIndex(function(x){return x.id===s.id;})); }).join('');
+  // Attach edit button onclick untuk lagu milik user
+  if(currentUser){
+    list.forEach(function(s){
+      if(s.uploadedBy === currentUser.deviceId){
+        var btn = document.getElementById('uedit_'+s.id);
+        if(btn) btn.onclick = (function(docId, songId){ return function(e){ e.stopPropagation(); window.userEditSong(docId, songId); }; })(s._docId, s.id);
+      }
+    });
+  }
 }
 
 function renderFavList(){
@@ -1129,14 +1144,25 @@ function updateCounts(){
 function renderQueue(){
   var el=document.getElementById('queueList');
   if(!songs.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Belum ada lagu</div>'; return; }
-  el.innerHTML=songs.map(function(s,i){
-    return '<div class="q-item'+(i===currentIdx?' current':'')+'" onclick="loadSong('+i+')">'+
-      '<div class="q-num">'+(i===currentIdx?'♪':(i+1))+'</div>'+
-      '<div class="q-art">'+emoji(i)+'</div>'+
+  el.innerHTML='';
+  // Tentukan source queue berdasarkan lagu yang sedang diputar
+  var currSong = currentIdx>=0 ? songs[currentIdx] : null;
+  var currOwner = currSong ? (currSong.uploadedBy||'admin') : 'admin';
+  var queueSongs = songs.filter(function(s){ return (s.uploadedBy||'admin') === currOwner; });
+  
+  queueSongs.forEach(function(s){
+    var realIdx = songs.indexOf(s);
+    var queueNum = queueSongs.indexOf(s)+1;
+    var item = document.createElement('div');
+    item.className = 'q-item'+(realIdx===currentIdx?' current':'');
+    var artHtml = s.coverUrl ? '<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">' : emoji(realIdx);
+    item.innerHTML = '<div class="q-num">'+(realIdx===currentIdx?'♪':queueNum)+'</div>'+
+      '<div class="q-art" style="overflow:hidden;">'+artHtml+'</div>'+
       '<div class="q-info"><div class="q-title">'+esc(s.title)+'</div><div class="q-artist">'+esc(s.artist)+'</div></div>'+
-      '<div class="q-dur">'+fmtTime(s.duration)+'</div>'+
-    '</div>';
-  }).join('');
+      '<div class="q-dur">'+fmtTime(s.duration)+'</div>';
+    item.onclick = (function(idx){ return function(){ loadSong(idx); }; })(realIdx);
+    el.appendChild(item);
+  });
 }
 
 // ==============================
@@ -1186,29 +1212,37 @@ function togglePlay(){
   if(isPlaying){ audio.pause(); } else { audio.play(); }
 }
 
+function getGroupSongs(){
+  var currSong = currentIdx>=0 ? songs[currentIdx] : null;
+  var currOwner = currSong ? (currSong.uploadedBy||'admin') : 'admin';
+  return songs.filter(function(s){ return (s.uploadedBy||'admin') === currOwner; });
+}
+
 function nextSong(){
   if(!songs.length) return;
-  var idx;
-  if(repeatMode===2){ 
-    // Ulangi 1 lagu
-    audio.currentTime=0; audio.play(); return;
-  } else if(shuffleOn){
-    idx=Math.floor(Math.random()*songs.length);
+  if(repeatMode===2){ audio.currentTime=0; audio.play(); return; }
+  var group = getGroupSongs();
+  var currInGroup = group.indexOf(songs[currentIdx]);
+  var nextInGroup;
+  if(shuffleOn){
+    nextInGroup = Math.floor(Math.random()*group.length);
   } else {
-    idx=currentIdx+1;
-    if(idx>=songs.length){
-      if(repeatMode===1) idx=0; // Ulangi semua
-      else { isPlaying=false; updatePlayUI(); return; } // Stop di akhir
+    nextInGroup = currInGroup+1;
+    if(nextInGroup>=group.length){
+      if(repeatMode===1) nextInGroup=0;
+      else { isPlaying=false; updatePlayUI(); return; }
     }
   }
-  loadSong(idx);
+  loadSong(songs.indexOf(group[nextInGroup]));
 }
 
 function prevSong(){
   if(!songs.length) return;
   if(audio.currentTime>3){ audio.currentTime=0; return; }
-  var idx=shuffleOn?Math.floor(Math.random()*songs.length):(currentIdx-1+songs.length)%songs.length;
-  loadSong(idx);
+  var group = getGroupSongs();
+  var currInGroup = group.indexOf(songs[currentIdx]);
+  var prevInGroup = shuffleOn ? Math.floor(Math.random()*group.length) : (currInGroup-1+group.length)%group.length;
+  loadSong(songs.indexOf(group[prevInGroup]));
 }
 
 function playAll(){
@@ -1297,11 +1331,19 @@ function updatePlayUI(){
     var s=songs[currentIdx];
     var mt=document.getElementById('miniTitle'),mar=document.getElementById('miniArtist');
     var ft=document.getElementById('fpTitle'),far=document.getElementById('fpArtist'),fg=document.getElementById('fpGenre');
+    var fu=document.getElementById('fpUploader');
     if(mt) mt.textContent=s.title;
     if(mar) mar.textContent=s.artist;
     if(ft) ft.textContent=s.title;
     if(far) far.textContent=s.artist;
     if(fg) fg.textContent=s.genre;
+    if(fu){
+      if(!s.uploadedBy || s.uploadedBy==='admin'){
+        fu.innerHTML='👑 Ditambahkan oleh <span style="background:#e53935;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;">ADMIN</span>';
+      } else {
+        fu.innerHTML='🎵 Ditambahkan oleh <span style="color:var(--accent3);font-weight:700;">'+esc(s.uploaderName||'User')+'</span> <span style="color:var(--accent);font-size:10px;">'+esc(s.uploadedByTag||'')+'</span>';
+      }
+    }
     updateFpFav();
   }
 }
@@ -1777,10 +1819,169 @@ window.showUserUpload = function(){
     return; 
   }
   closeUserPanel();
-  switchTab('admin');
-  // Set mode upload user
-  localStorage.setItem('m2026_upload_as_user', '1');
-  showToast('🎵 Upload lagu sebagai '+currentUser.name);
+  openUserUploadModal();
+}
+
+window.openUserUploadModal = function(){
+  var modal = document.createElement('div');
+  modal.id = 'userUploadModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99000;background:var(--bg);overflow-y:auto;';
+  
+  var wrap = document.createElement('div');
+  wrap.style.padding = '16px';
+  
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:20px;';
+  var backBtn = document.createElement('button');
+  backBtn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:50%;min-width:36px;height:36px;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;';
+  backBtn.textContent = '←';
+  backBtn.onclick = function(){ modal.remove(); };
+  var titleEl = document.createElement('div');
+  titleEl.innerHTML = '<div style="font-size:16px;font-weight:800;">🎵 Upload Lagu</div>'+
+    '<div style="font-size:12px;color:var(--muted);">sebagai '+esc(currentUser.name)+' • '+(25-(currentUser.songCount||0))+' slot tersisa</div>';
+  header.appendChild(backBtn);
+  header.appendChild(titleEl);
+  wrap.appendChild(header);
+  
+  // Upload zone
+  var uploadZone = document.createElement('div');
+  uploadZone.className = 'upload-zone';
+  uploadZone.id = 'userUploadZone';
+  uploadZone.innerHTML = '<div class="uz-icon" id="userUploadIcon">📁</div><div class="uz-title">1. Pilih File Musik</div><div class="uz-sub" id="userUploadSub">MP3, WAV, OGG, M4A, FLAC</div>';
+  uploadZone.onclick = function(){ document.getElementById('userFileInput').click(); };
+  
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.id = 'userFileInput';
+  fileInput.accept = 'audio/*';
+  fileInput.multiple = true;
+  fileInput.style.display = 'none';
+  fileInput.onchange = function(){ userAddSongs(this); };
+  
+  wrap.appendChild(uploadZone);
+  wrap.appendChild(fileInput);
+  
+  // Cover
+  var coverGroup = document.createElement('div');
+  coverGroup.className = 'form-group';
+  coverGroup.innerHTML = '<label class="form-label">2. COVER FOTO (opsional)</label>';
+  var coverZone = document.createElement('div');
+  coverZone.className = 'upload-zone';
+  coverZone.style.padding = '14px';
+  coverZone.id = 'userCoverZone';
+  coverZone.innerHTML = '<div style="font-size:24px;">🖼️</div><div style="font-size:13px;font-weight:700;color:var(--accent);">Pilih Cover Foto</div>';
+  coverZone.onclick = function(){ document.getElementById('userCoverInput').click(); };
+  var coverInput = document.createElement('input');
+  coverInput.type = 'file';
+  coverInput.id = 'userCoverInput';
+  coverInput.accept = 'image/*';
+  coverInput.style.display = 'none';
+  coverInput.onchange = function(){ userPreviewCover(this); };
+  coverGroup.appendChild(coverZone);
+  coverGroup.appendChild(coverInput);
+  wrap.appendChild(coverGroup);
+  
+  // Artis
+  var artistGroup = document.createElement('div');
+  artistGroup.className = 'form-group';
+  artistGroup.innerHTML = '<label class="form-label">3. NAMA ARTIS (opsional)</label><input class="form-input" id="userArtistInput" placeholder="Nama artis / band">';
+  wrap.appendChild(artistGroup);
+  
+  // Genre
+  var genreGroup = document.createElement('div');
+  genreGroup.className = 'form-group';
+  genreGroup.innerHTML = '<label class="form-label">4. GENRE</label><select class="form-input" id="userGenreInput"><option value="Pop">🎤 Pop</option><option value="Rock">🎸 Rock</option><option value="Hip-Hop">🎤 Hip-Hop</option><option value="R&B">🎵 R&B</option><option value="EDM">🎛️ EDM</option><option value="Jazz">🎷 Jazz</option><option value="Klasik">🎻 Klasik</option><option value="Dangdut">🎶 Dangdut</option><option value="Indie">🎸 Indie</option><option value="Lainnya">🎵 Lainnya</option></select>';
+  wrap.appendChild(genreGroup);
+  
+  // Upload btn
+  var uploadBtn = document.createElement('button');
+  uploadBtn.className = 'submit-btn';
+  uploadBtn.id = 'userUploadBtn';
+  uploadBtn.textContent = '📤 Upload Lagu';
+  uploadBtn.onclick = confirmUserUpload;
+  wrap.appendChild(uploadBtn);
+  
+  modal.appendChild(wrap);
+  document.body.appendChild(modal);
+}
+
+var userPendingFiles = [];
+
+window.userAddSongs = function(input){
+  var files = Array.from(input.files);
+  if(!files.length) return;
+  userPendingFiles = files;
+  var icon = document.getElementById('userUploadIcon');
+  var sub = document.getElementById('userUploadSub');
+  if(icon) icon.textContent = '✅';
+  if(sub) sub.textContent = files.length+' file dipilih!';
+  showToast('📁 '+files.length+' file dipilih!');
+  input.value='';
+}
+
+window.userPreviewCover = function(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var zone = document.getElementById('userCoverZone');
+    if(zone) zone.innerHTML = '<img src="'+e.target.result+'" style="width:60px;height:60px;border-radius:10px;object-fit:cover;"><div style="font-size:12px;color:var(--green);margin-top:6px;font-weight:700;">Cover dipilih ✅</div>';
+  };
+  reader.readAsDataURL(file);
+}
+
+window.confirmUserUpload = async function(){
+  if(!userPendingFiles.length){ showToast('⚠️ Pilih file musik dulu!'); return; }
+  if(!currentUser){ showToast('⚠️ Daftar dulu!'); return; }
+  if((currentUser.songCount||0) >= 25){ showToast('❌ Batas 25 lagu!'); return; }
+  
+  var artist = document.getElementById('userArtistInput').value.trim() || currentUser.name;
+  var genre = document.getElementById('userGenreInput').value;
+  var coverFile = document.getElementById('userCoverInput').files[0];
+  
+  var btn = document.getElementById('userUploadBtn');
+  if(btn){ btn.textContent='⏳ Mengupload...'; btn.disabled=true; }
+  
+  var coverUrl = '';
+  if(coverFile){
+    try{ coverUrl = await uploadCoverToCloudinary(coverFile); }catch(e){}
+  }
+  
+  var added = 0;
+  var validFiles = userPendingFiles.filter(function(f){ return f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i); });
+  
+  for(var i=0; i<validFiles.length; i++){
+    if((currentUser.songCount||0)+added >= 25) break;
+    var f = validFiles[i];
+    try{
+      showToast('☁️ Upload '+(i+1)+'/'+validFiles.length+'...');
+      var cloudUrl = await uploadToCloudinary(f);
+      var parts = f.name.replace(/\.[^.]+$/,'').split(' - ');
+      var title = parts.length>1?parts[1].trim():parts[0].trim();
+      var art = parts.length>1?parts[0].trim():artist;
+      var song = {id:Date.now()+'_'+i,title:title,artist:art,genre:genre,url:cloudUrl,coverUrl:coverUrl,plays:0,addedAt:Date.now(),duration:0,
+        uploadedBy:currentUser.deviceId, uploaderName:currentUser.name, uploaderAvatar:currentUser.avatar, uploadedByTag:currentUser.tag||''};
+      await new Promise(function(resolve){
+        var tmp=new Audio(cloudUrl);
+        tmp.addEventListener('loadedmetadata',function(){ song.duration=tmp.duration; resolve(); });
+        tmp.addEventListener('error',function(){ resolve(); });
+        setTimeout(resolve,3000);
+      });
+      await saveSongToFirestore(song);
+      currentUser.songCount = (currentUser.songCount||0)+1;
+      saveUser(currentUser);
+      added++;
+    }catch(e){ showToast('❌ Gagal upload: '+e.message); }
+  }
+  
+  userPendingFiles = [];
+  if(btn){ btn.textContent='📤 Upload Lagu'; btn.disabled=false; }
+  if(added>0){
+    showToast('✅ '+added+' lagu berhasil diupload!');
+    var m = document.getElementById('userUploadModal');
+    if(m) m.remove();
+  }
 }
 
 // ==============================
@@ -1978,9 +2179,71 @@ window.openUserAlbum = function(deviceId, name, avatar, tag){
 }
 
 // ==============================
+// USER EDIT SONG
+// ==============================
+window.userEditSong = async function(docId, songId){
+  var s = songs.find(function(x){ return x.id===songId; });
+  if(!s){ showToast('⚠️ Lagu tidak ditemukan!'); return; }
+  if(!currentUser || s.uploadedBy !== currentUser.deviceId){ showToast('❌ Kamu tidak bisa edit lagu ini!'); return; }
+  
+  var modal = document.createElement('div');
+  modal.id = 'userEditModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.8);display:flex;align-items:flex-end;';
+  
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg2);border-radius:20px 20px 0 0;width:100%;display:flex;flex-direction:column;';
+  
+  var inner = document.createElement('div');
+  inner.style.cssText = 'padding:24px 24px 0;overflow-y:auto;flex:1;';
+  inner.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:16px;">✏️ Edit Lagu Kamu</div>'+
+    '<div class="form-group"><label class="form-label">JUDUL LAGU</label><input class="form-input" id="uEditTitle" value="'+esc(s.title)+'"></div>'+
+    '<div class="form-group"><label class="form-label">NAMA ARTIS</label><input class="form-input" id="uEditArtist" value="'+esc(s.artist)+'"></div>'+
+    '<div class="form-group"><label class="form-label">COVER BARU (opsional)</label><input type="file" id="uEditCover" accept="image/*" class="form-input" style="padding:8px;"></div>';
+  
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px;padding:16px 24px 32px;flex-shrink:0;background:var(--bg2);border-top:1px solid rgba(255,255,255,.1);';
+  
+  var cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;';
+  cancelBtn.textContent = 'Batal';
+  cancelBtn.onclick = function(){ modal.remove(); };
+  
+  var saveBtn = document.createElement('button');
+  saveBtn.style.cssText = 'flex:2;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;padding:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;';
+  saveBtn.textContent = '💾 Simpan';
+  saveBtn.onclick = async function(){
+    var title = document.getElementById('uEditTitle').value.trim();
+    var artist = document.getElementById('uEditArtist').value.trim();
+    var coverFile = document.getElementById('uEditCover').files[0];
+    if(!title){ showToast('⚠️ Judul tidak boleh kosong!'); return; }
+    var updateData = { title:title, artist:artist||'Unknown' };
+    if(coverFile){
+      try{ showToast('☁️ Upload cover...'); updateData.coverUrl = await uploadCoverToCloudinary(coverFile); }catch(e){}
+    }
+    try{
+      await updateDoc(doc(db,'songs',docId), updateData);
+      modal.remove();
+      showToast('✅ Lagu berhasil diedit!');
+    }catch(e){ showToast('❌ Gagal: '+e.message); }
+  };
+  
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(saveBtn);
+  box.appendChild(inner);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+// ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
 // ==============================
 window.showAdminUI = showAdminUI;
+window.openUserUploadModal = openUserUploadModal;
+window.userAddSongs = userAddSongs;
+window.userPreviewCover = userPreviewCover;
+window.confirmUserUpload = confirmUserUpload;
+window.userEditSong = userEditSong;
 window.switchTab = switchTab;
 window.toggleSearch = toggleSearch;
 window.doSearch = doSearch;
