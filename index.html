@@ -188,7 +188,7 @@ select.form-input{-webkit-appearance:none;}
 .mc.pp:active{transform:scale(.93);}
 
 /* ===== FULL PLAYER ===== */
-#fullPlayer{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;overflow:hidden;}
+#fullPlayer{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;overflow:hidden;isolation:isolate;}
 #fpBgBlur{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(40px) brightness(0.3);transform:scale(1.2);z-index:0;transition:background-image .5s;}
 #fpBgColor{position:absolute;inset:0;background:rgba(10,10,20,.6);z-index:1;}
 .fp-top{display:flex;align-items:center;padding:14px 16px;flex-shrink:0;position:relative;z-index:2;}
@@ -951,7 +951,7 @@ function renderHome(){
   else {
     el.innerHTML=recent.map(function(s){
       var realIdx=songs.findIndex(function(x){return x.id===s.id;});
-      return '<div class="album-card" onclick="loadSong('+realIdx+')">'+
+      return '<div class="album-card" onclick="loadSong('+realIdx+',true)">'+
         '<div class="album-art">'+emoji(realIdx)+'</div>'+
         '<div class="album-name">'+esc(s.title)+'</div>'+
         '<div class="album-count">'+esc(s.artist)+'</div>'+
@@ -1088,6 +1088,10 @@ function loadSong(idx, openFull){
     updatePlayUI();
     renderAll();
     if(openFull) openFullPlayer();
+    // Update plays di Firestore (global counter)
+    if(s._docId){
+      updateDoc(doc(db,'songs',s._docId),{plays: s.plays}).catch(function(){});
+    }
   }).catch(function(e){
     showToast('❌ Gagal memutar: '+e.message);
   });
@@ -1109,9 +1113,18 @@ function togglePlay(){
 function nextSong(){
   if(!songs.length) return;
   var idx;
-  if(repeatMode===2) idx=currentIdx;
-  else if(shuffleOn) idx=Math.floor(Math.random()*songs.length);
-  else idx=(currentIdx+1)%songs.length;
+  if(repeatMode===2){ 
+    // Ulangi 1 lagu
+    audio.currentTime=0; audio.play(); return;
+  } else if(shuffleOn){
+    idx=Math.floor(Math.random()*songs.length);
+  } else {
+    idx=currentIdx+1;
+    if(idx>=songs.length){
+      if(repeatMode===1) idx=0; // Ulangi semua
+      else { isPlaying=false; updatePlayUI(); return; } // Stop di akhir
+    }
+  }
   loadSong(idx);
 }
 
@@ -1142,7 +1155,7 @@ function cycleRepeat(){
 
 function updateModes(){
   var rb=document.getElementById('repeatBtn'),sb=document.getElementById('shuffleBtn');
-  if(rb){ rb.classList.toggle('mode-on',repeatMode>0); rb.textContent=repeatMode===2?'🔂':'🔁'; }
+  if(rb) rb.classList.toggle('mode-on',repeatMode>0);
   if(sb) sb.classList.toggle('mode-on',shuffleOn);
 }
 
@@ -1366,11 +1379,12 @@ window.editCurrentSong = async function() {
   var docId = s._docId;
   var modal = document.createElement('div');
   modal.id = 'editModal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:flex-end;';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.8);display:flex;align-items:flex-end;';
   var titleVal = (s.title||'').replace(/"/g,'');
   var artistVal = (s.artist||'').replace(/"/g,'');
   modal.innerHTML = [
-    '<div style="background:#1a1a35;border-radius:20px 20px 0 0;padding:24px;width:100%;max-height:80vh;overflow-y:auto;">',
+    '<div style="background:#1a1a35;border-radius:20px 20px 0 0;width:100%;max-height:90vh;display:flex;flex-direction:column;">',
+    '<div style="padding:24px 24px 0;overflow-y:auto;flex:1;">',
     '<div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#fff;">✏️ Edit Lagu</div>',
     '<div style="margin-bottom:12px;">',
     '<label style="font-size:11px;font-weight:700;color:#6c63ff;display:block;margin-bottom:6px;">JUDUL LAGU</label>',
@@ -1383,15 +1397,21 @@ window.editCurrentSong = async function() {
     '<div style="margin-bottom:16px;">',
     '<label style="font-size:11px;font-weight:700;color:#6c63ff;display:block;margin-bottom:6px;">COVER BARU (opsional)</label>',
     '<input type="file" id="editCoverInp" accept="image/*" class="form-input" style="padding:8px;">',
-    '</div>',
-    '<div style="display:flex;gap:10px;">',
-    '<button id="editCancelBtn" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Batal</button>',
-    '<button id="editSaveBtn" style="flex:2;background:linear-gradient(135deg,#6c63ff,#ff6584);border:none;border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">💾 Simpan</button>',
+    '</div></div>',
+    '<div style="display:flex;gap:10px;padding:16px 24px 32px;flex-shrink:0;background:#1a1a35;border-top:1px solid rgba(255,255,255,.1);">',
+    '<button id="editCancelBtn" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Batal</button>',
+    '<button id="editSaveBtn" style="flex:2;background:linear-gradient(135deg,#6c63ff,#ff6584);border:none;border-radius:12px;padding:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">💾 Simpan</button>',
     '</div></div>'
   ].join('');
   document.body.appendChild(modal);
-  document.getElementById('editCancelBtn').onclick = function(){ document.getElementById('editModal').remove(); };
-  document.getElementById('editSaveBtn').onclick = function(){ saveEditSong(docId); };
+  // Sembunyikan fullPlayer sementara biar modal bisa dipencet
+  var fp = document.getElementById('fullPlayer');
+  if(fp) fp.style.zIndex = '1';
+  document.getElementById('editCancelBtn').onclick = function(){ 
+    document.getElementById('editModal').remove(); 
+    if(fp) fp.style.zIndex = '200';
+  };
+  document.getElementById('editSaveBtn').onclick = function(){ window.saveEditSong(docId); };
 }
 
 window.saveEditSong = async function(docId) {
@@ -1437,7 +1457,6 @@ window.editSong = async function(docId, currentTitle, currentArtist) {
 // ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
 // ==============================
-window.saveEditSong = saveEditSong;
 window.switchTab = switchTab;
 window.toggleSearch = toggleSearch;
 window.doSearch = doSearch;
