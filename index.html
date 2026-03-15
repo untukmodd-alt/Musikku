@@ -269,6 +269,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes marquee{0%{transform:translateX(100vw);}100%{transform:translateX(-100%);}}
 
+/* ===== TIMER ===== */
+#timerModal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:20px;}
+#timerModal.show{display:flex;}
+.timer-box{background:var(--bg2);border-radius:20px;padding:28px;width:100%;max-width:320px;border:1px solid var(--border);}
+.timer-active{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,.2);border:1px solid var(--accent);border-radius:12px;padding:4px 12px;font-size:12px;color:var(--accent);font-weight:700;}
+
 /* ===== USER PANEL ===== */
 #userPanel{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);display:none;align-items:flex-end;}
 #userPanel.show{display:flex;}
@@ -406,19 +412,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
           <input class="form-input" type="text" id="reqNameInput" placeholder="Nama kamu...">
         </div>
         <button class="submit-btn" style="background:linear-gradient(135deg,var(--accent2),var(--accent));" onclick="submitRequest()">🎤 Kirim Request</button>
-      </div>
-
-      <div class="sec"><em>💬</em> Feedback & Saran</div>
-      <div style="background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">
-        <div class="form-group">
-          <label class="form-label">PESAN KAMU</label>
-          <textarea class="form-input" id="feedbackInput" placeholder="Tulis feedback atau saran kamu..." rows="3" style="resize:none;"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">NAMA (opsional)</label>
-          <input class="form-input" type="text" id="feedbackNameInput" placeholder="Nama kamu...">
-        </div>
-        <button class="submit-btn" style="background:linear-gradient(135deg,var(--accent3),var(--accent));" onclick="submitFeedback()">💬 Kirim Feedback</button>
       </div>
 
       <div class="sec"><em>🔥</em> Sering Diputar</div>
@@ -595,6 +588,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 </div>
 
+<!-- TIMER MODAL -->
+<div id="timerModal">
+  <div class="timer-box">
+    <div style="font-size:16px;font-weight:800;margin-bottom:20px;color:var(--text);">⏱️ Pewaktu Musik</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Musik akan berhenti otomatis setelah:</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;" id="timerOptions"></div>
+    <div id="timerCustomRow" style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;color:var(--accent);display:block;margin-bottom:6px;">MENIT CUSTOM</label>
+      <input class="form-input" type="number" id="timerCustomInput" placeholder="Masukkan menit..." min="1" max="180">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeTimerModal()" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Batal</button>
+      <button onclick="setTimer()" style="flex:2;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">✅ Set Timer</button>
+    </div>
+    <button id="cancelTimerBtn" onclick="cancelTimer()" style="display:none;width:100%;margin-top:10px;background:rgba(248,113,113,.2);border:1px solid var(--red);border-radius:12px;padding:12px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">❌ Batalkan Timer</button>
+  </div>
+</div>
+
 <!-- USER PANEL -->
 <div id="userPanel">
   <div class="up-box">
@@ -652,6 +663,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <button id="fpDownloadBtn" onclick="downloadCurrentSong()" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;margin-bottom:12px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download Lagu
+    </button>
+    <!-- Tombol timer -->
+    <button onclick="openTimerModal()" id="fpTimerBtn" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;margin-bottom:12px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timerBtnText">⏱️ Pewaktu</span>
     </button>
 
     <!-- Edit lagu khusus admin -->
@@ -713,13 +729,26 @@ var pinBuf = '';
 var pendingFiles = [];
 var deferredInstall = null;
 var isUploading = false;
+var queueMode = 'all'; // 'all' = semua lagu, 'owner:xxx' = lagu milik owner tertentu
 
 var audio = document.getElementById('audio');
 
 // Load local prefs
 try {
   var savedFavs = localStorage.getItem('musikku_favs');
-  if (savedFavs) favs = JSON.parse(savedFavs);
+  if (savedFavs) {
+    favs = JSON.parse(savedFavs);
+    // Konversi format lama (boolean) ke timestamp
+    var converted = false;
+    Object.keys(favs).forEach(function(k){
+      if(favs[k] === true || favs[k] === false){
+        if(favs[k] === true) favs[k] = Date.now();
+        else delete favs[k];
+        converted = true;
+      }
+    });
+    if(converted) localStorage.setItem('musikku_favs', JSON.stringify(favs));
+  }
   var savedPin = localStorage.getItem('musikku_pin');
   if (savedPin) adminPin = savedPin;
   var savedCount = localStorage.getItem('musikku_played');
@@ -1067,7 +1096,7 @@ function songCardHTML(s, realIdx){
   return '<div class="song-card'+(isCurr?' now-playing':'')+'" id="sc-'+realIdx+'">'+
     '<div class="song-art'+(isCurr&&isPlaying&&!s.coverUrl?' spin':'')+'">'+artContent+
     '</div>'+
-    '<div class="song-info" onclick="loadSong('+realIdx+',true)">'+
+    '<div class="song-info" onclick="loadSongFromAll('+realIdx+')">'+
       '<div class="song-title">'+esc(s.title)+'</div>'+
       '<div class="song-meta"><span>'+esc(s.artist)+'</span><span>'+esc(s.genre)+'</span>'+(s.duration?'<span>'+fmtTime(s.duration)+'</span>':'')+'</div>'+
     '</div>'+
@@ -1102,10 +1131,28 @@ function renderAllSongs(filter){
 }
 
 function renderFavList(){
-  var favSongs=songs.filter(function(s){return favs[s.id];});
   var el=document.getElementById('favList');
-  if(!favSongs.length){ el.innerHTML='<div class="empty"><div class="ei">💔</div><h3>Belum ada favorit</h3><p>Ketuk ❤️ pada lagu untuk ditambahkan</p></div>'; return; }
-  el.innerHTML=favSongs.map(function(s){ return songCardHTML(s,songs.findIndex(function(x){return x.id===s.id;})); }).join('');
+  var favSongs=songs.filter(function(s){return favs[s.id];});
+  if(!favSongs.length){ el.innerHTML='<div class="empty"><div class="ei">💔</div><h3>Belum ada favorit</h3><p>Ketuk ❤️ pada lagu untuk ditambahkan ke sini</p></div>'; return; }
+  // Urut berdasarkan waktu ditambahkan ke favorit - terbaru di atas
+  favSongs.sort(function(a,b){ return (favs[b.id]||0)-(favs[a.id]||0); });
+  el.innerHTML='';
+  favSongs.forEach(function(s){
+    var realIdx = songs.findIndex(function(x){return x.id===s.id;});
+    var html = songCardHTML(s, realIdx);
+    // Ganti loadSong di song-info dengan loadSongFav
+    html = html.replace('onclick="loadSong('+realIdx+',true)"', 'onclick="loadSongFav('+realIdx+')"');
+    el.innerHTML += html;
+  });
+  // Attach edit button user
+  if(currentUser){
+    favSongs.forEach(function(s){
+      if(s.uploadedBy === currentUser.deviceId){
+        var btn = document.getElementById('uedit_'+s.id);
+        if(btn) btn.onclick = (function(docId, songId){ return function(e){ e.stopPropagation(); window.userEditSong(docId, songId); }; })(s._docId, s.id);
+      }
+    });
+  }
 }
 
 function renderStats(){
@@ -1145,10 +1192,14 @@ function renderQueue(){
   var el=document.getElementById('queueList');
   if(!songs.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Belum ada lagu</div>'; return; }
   el.innerHTML='';
-  // Tentukan source queue berdasarkan lagu yang sedang diputar
-  var currSong = currentIdx>=0 ? songs[currentIdx] : null;
-  var currOwner = currSong ? (currSong.uploadedBy||'admin') : 'admin';
-  var queueSongs = songs.filter(function(s){ return (s.uploadedBy||'admin') === currOwner; });
+  // Tentukan queue berdasarkan queueMode
+  var queueSongs;
+  if(queueMode === 'all'){
+    queueSongs = songs; // semua lagu
+  } else {
+    var owner = queueMode.replace('owner:','');
+    queueSongs = songs.filter(function(s){ return (s.uploadedBy||'admin') === owner; });
+  }
   
   queueSongs.forEach(function(s){
     var realIdx = songs.indexOf(s);
@@ -1213,9 +1264,14 @@ function togglePlay(){
 }
 
 function getGroupSongs(){
-  var currSong = currentIdx>=0 ? songs[currentIdx] : null;
-  var currOwner = currSong ? (currSong.uploadedBy||'admin') : 'admin';
-  return songs.filter(function(s){ return (s.uploadedBy||'admin') === currOwner; });
+  if(queueMode === 'all') return songs;
+  if(queueMode === 'fav'){
+    var favSongs = songs.filter(function(s){ return favs[s.id]; });
+    favSongs.sort(function(a,b){ return (favs[b.id]||0)-(favs[a.id]||0); });
+    return favSongs;
+  }
+  var owner = queueMode.replace('owner:','');
+  return songs.filter(function(s){ return (s.uploadedBy||'admin') === owner; });
 }
 
 function nextSong(){
@@ -1247,6 +1303,7 @@ function prevSong(){
 
 function playAll(){
   if(!songs.length){ showToast('⚠️ Belum ada lagu!'); return; }
+  queueMode = 'all';
   loadSong(0);
 }
 
@@ -1352,11 +1409,16 @@ function updatePlayUI(){
 // FAV
 // ==============================
 function toggleFav(id){
-  favs[id]=!favs[id];
+  if(favs[id]){
+    delete favs[id];
+    showToast('🤍 Dihapus dari favorit');
+  } else {
+    favs[id] = Date.now(); // simpan timestamp kapan ditambahkan
+    showToast('❤️ Ditambahkan ke favorit!');
+  }
   saveFavs();
   renderAll();
   updateFpFav();
-  showToast(favs[id]?'❤️ Ditambahkan ke favorit!':'🤍 Dihapus dari favorit');
 }
 
 function toggleFavCurr(){
@@ -1470,23 +1532,7 @@ document.addEventListener('touchend',function(e){ var n=Date.now(); if(n-lt<300)
 // ==============================
 // FEEDBACK
 // ==============================
-window.submitFeedback = async function() {
-  var msg = document.getElementById('feedbackInput') ? document.getElementById('feedbackInput').value.trim() : '';
-  var name = document.getElementById('feedbackNameInput') ? document.getElementById('feedbackNameInput').value.trim() : '';
-  if(!msg){ showToast('⚠️ Tulis feedback dulu!'); return; }
-  try{
-    await addDoc(collection(db, 'feedbacks'), {
-      message: msg,
-      name: name || 'Anonim',
-      sentAt: Date.now()
-    });
-    document.getElementById('feedbackInput').value='';
-    if(document.getElementById('feedbackNameInput')) document.getElementById('feedbackNameInput').value='';
-    showToast('✅ Feedback terkirim! Makasih 😊');
-  }catch(e){
-    showToast('❌ Gagal kirim: '+e.message);
-  }
-}
+// Feedback dihapus
 
 // ==============================
 // EDIT LAGU
@@ -2117,7 +2163,7 @@ window.openAdminAlbum = function(albumIdx){
     card.innerHTML = '<div class="song-art">'+artHtml+'</div>'+
       '<div class="song-info"><div class="song-title">'+esc(s.title)+'</div>'+
       '<div class="song-meta"><span>'+esc(s.artist)+'</span><span>'+esc(s.genre)+'</span></div></div>';
-    card.onclick = (function(i){ return function(){ loadSong(i,true); modal.remove(); }; })(idx);
+    card.onclick = (function(i, owner){ return function(){ setQueueMode('owner:'+owner); loadSong(i, true); modal.remove(); }; })(idx, s.uploadedBy||'admin');
     wrap.appendChild(card);
   });
   
@@ -2170,7 +2216,7 @@ window.openUserAlbum = function(deviceId, name, avatar, tag){
     card.innerHTML = '<div class="song-art">'+artHtml+'</div>'+
       '<div class="song-info"><div class="song-title">'+esc(s.title)+'</div>'+
       '<div class="song-meta"><span>'+esc(s.artist)+'</span></div></div>';
-    card.onclick = (function(i){ return function(){ loadSong(i,true); modal.remove(); }; })(idx);
+    card.onclick = (function(i, owner){ return function(){ setQueueMode('owner:'+owner); loadSong(i, true); modal.remove(); }; })(idx, s.uploadedBy||'admin');
     wrap.appendChild(card);
   });
   
@@ -2235,10 +2281,123 @@ window.userEditSong = async function(docId, songId){
   document.body.appendChild(modal);
 }
 
+function loadSongFav(idx){
+  queueMode = 'fav';
+  loadSong(idx, true);
+}
+
+function loadSongFromAll(idx){
+  queueMode = 'all';
+  loadSong(idx, true);
+}
+
+function setQueueMode(mode){
+  queueMode = mode;
+}
+
+// ==============================
+// PEWAKTU / SLEEP TIMER
+// ==============================
+var timerInterval = null;
+var timerEndTime = null;
+var TIMER_OPTIONS = [5, 10, 15, 20, 30, 60];
+
+window.openTimerModal = function(){
+  var modal = document.getElementById('timerModal');
+  var optDiv = document.getElementById('timerOptions');
+  
+  // Render pilihan waktu
+  optDiv.innerHTML = '';
+  TIMER_OPTIONS.forEach(function(min){
+    var btn = document.createElement('button');
+    btn.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+    btn.textContent = min < 60 ? min+' mnt' : '1 jam';
+    btn.onclick = function(){
+      document.getElementById('timerCustomInput').value = min;
+      optDiv.querySelectorAll('button').forEach(function(b){ b.style.background='var(--card)'; b.style.borderColor='var(--border)'; b.style.color='var(--text)'; });
+      btn.style.background = 'var(--accent)';
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = '#fff';
+    };
+    optDiv.appendChild(btn);
+  });
+  
+  // Tampilkan tombol batalkan kalau timer aktif
+  var cancelBtn = document.getElementById('cancelTimerBtn');
+  if(cancelBtn) cancelBtn.style.display = timerInterval ? 'block' : 'none';
+  
+  modal.classList.add('show');
+}
+
+window.closeTimerModal = function(){
+  document.getElementById('timerModal').classList.remove('show');
+}
+
+window.setTimer = function(){
+  var min = parseInt(document.getElementById('timerCustomInput').value);
+  if(!min || min < 1){ showToast('⚠️ Masukkan menit yang valid!'); return; }
+  if(min > 180){ showToast('⚠️ Maksimal 180 menit!'); return; }
+  
+  // Clear timer lama
+  if(timerInterval) clearInterval(timerInterval);
+  
+  timerEndTime = Date.now() + (min * 60 * 1000);
+  
+  timerInterval = setInterval(function(){
+    var remaining = timerEndTime - Date.now();
+    if(remaining <= 0){
+      // Stop musik
+      audio.pause();
+      isPlaying = false;
+      updatePlayUI();
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerEndTime = null;
+      updateTimerBtn();
+      showToast('⏱️ Pewaktu selesai! Musik dihentikan.');
+      return;
+    }
+    updateTimerBtn();
+  }, 1000);
+  
+  closeTimerModal();
+  updateTimerBtn();
+  showToast('⏱️ Musik berhenti dalam '+min+' menit!');
+}
+
+window.cancelTimer = function(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  timerEndTime = null;
+  updateTimerBtn();
+  closeTimerModal();
+  showToast('✅ Pewaktu dibatalkan!');
+}
+
+function updateTimerBtn(){
+  var btn = document.getElementById('timerBtnText');
+  if(!btn) return;
+  if(timerInterval && timerEndTime){
+    var remaining = Math.max(0, timerEndTime - Date.now());
+    var mins = Math.floor(remaining/60000);
+    var secs = Math.floor((remaining%60000)/1000);
+    btn.textContent = '⏱️ ' + mins + ':' + (secs<10?'0':'') + secs;
+  } else {
+    btn.textContent = '⏱️ Pewaktu';
+  }
+}
+
 // ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
 // ==============================
 window.showAdminUI = showAdminUI;
+window.setQueueMode = setQueueMode;
+window.openTimerModal = openTimerModal;
+window.closeTimerModal = closeTimerModal;
+window.setTimer = setTimer;
+window.cancelTimer = cancelTimer;
+window.loadSongFromAll = loadSongFromAll;
+window.loadSongFav = loadSongFav;
 window.openUserUploadModal = openUserUploadModal;
 window.userAddSongs = userAddSongs;
 window.userPreviewCover = userPreviewCover;
