@@ -1140,8 +1140,7 @@ function renderFavList(){
   favSongs.forEach(function(s){
     var realIdx = songs.findIndex(function(x){return x.id===s.id;});
     var html = songCardHTML(s, realIdx);
-    // Ganti loadSong di song-info dengan loadSongFav
-    html = html.replace('onclick="loadSong('+realIdx+',true)"', 'onclick="loadSongFav('+realIdx+')"');
+    html = html.replace('onclick="loadSongFromAll('+realIdx+')"', 'onclick="loadSongFav('+realIdx+')"');
     el.innerHTML += html;
   });
   // Attach edit button user
@@ -1189,13 +1188,22 @@ function updateCounts(){
 }
 
 function renderQueue(){
+  var label = document.getElementById('queueLabel');
+  if(label){
+    if(queueMode === 'fav') label.textContent = 'ANTRIAN LAGU FAVORIT ❤️';
+    else if(queueMode === 'all') label.textContent = 'ANTRIAN LAGU';
+    else label.textContent = 'ANTRIAN ALBUM';
+  }
   var el=document.getElementById('queueList');
   if(!songs.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Belum ada lagu</div>'; return; }
   el.innerHTML='';
   // Tentukan queue berdasarkan queueMode
   var queueSongs;
   if(queueMode === 'all'){
-    queueSongs = songs; // semua lagu
+    queueSongs = songs;
+  } else if(queueMode === 'fav'){
+    queueSongs = songs.filter(function(s){ return favs[s.id]; });
+    queueSongs.sort(function(a,b){ return (favs[b.id]||0)-(favs[a.id]||0); });
   } else {
     var owner = queueMode.replace('owner:','');
     queueSongs = songs.filter(function(s){ return (s.uploadedBy||'admin') === owner; });
@@ -1326,6 +1334,19 @@ function updateModes(){
   if(sb) sb.classList.toggle('mode-on',shuffleOn);
 }
 
+// Update posisi di Media Session
+audio.addEventListener('timeupdate', function(){
+  if(!('mediaSession' in navigator)) return;
+  if(!audio.duration) return;
+  try {
+    navigator.mediaSession.setPositionState({
+      duration: audio.duration,
+      playbackRate: audio.playbackRate,
+      position: audio.currentTime
+    });
+  } catch(e){}
+});
+
 // ==============================
 // AUDIO EVENTS
 // ==============================
@@ -1343,6 +1364,44 @@ audio.addEventListener('timeupdate',function(){
   if(ct) ct.textContent=fmtTime(audio.currentTime);
   if(tt) tt.textContent=fmtTime(audio.duration);
 });
+
+function updateMediaSession(){
+  if(!('mediaSession' in navigator)) return;
+  if(currentIdx < 0 || !songs[currentIdx]) return;
+  var s = songs[currentIdx];
+  
+  // Set metadata notifikasi
+  var artwork = [];
+  if(s.coverUrl){
+    artwork = [
+      { src: s.coverUrl, sizes: '192x192', type: 'image/png' },
+      { src: s.coverUrl, sizes: '512x512', type: 'image/png' }
+    ];
+  }
+  
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: s.title || 'Musik 2026',
+    artist: s.artist || 'Unknown',
+    album: 'Musik 2026',
+    artwork: artwork
+  });
+  
+  // Kontrol dari notifikasi
+  navigator.mediaSession.setActionHandler('play', function(){ 
+    audio.play(); isPlaying=true; updatePlayUI(); 
+  });
+  navigator.mediaSession.setActionHandler('pause', function(){ 
+    audio.pause(); isPlaying=false; updatePlayUI(); 
+  });
+  navigator.mediaSession.setActionHandler('previoustrack', function(){ prevSong(); });
+  navigator.mediaSession.setActionHandler('nexttrack', function(){ nextSong(); });
+  navigator.mediaSession.setActionHandler('seekto', function(e){ 
+    if(e.seekTime) audio.currentTime = e.seekTime; 
+  });
+  
+  // Update status playing
+  navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+}
 
 function updatePlayUI(){
   // Update SVG play/pause icons
@@ -1394,6 +1453,7 @@ function updatePlayUI(){
     if(ft) ft.textContent=s.title;
     if(far) far.textContent=s.artist;
     if(fg) fg.textContent=s.genre;
+    updateMediaSession();
     if(fu){
       if(!s.uploadedBy || s.uploadedBy==='admin'){
         fu.innerHTML='👑 Ditambahkan oleh <span style="background:#e53935;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;">ADMIN</span>';
