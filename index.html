@@ -1455,6 +1455,15 @@ function toggleSearch(){
 }
 
 function doSearch(q){
+  // Kode rahasia admin
+  if(q.trim() === 'admin2026'){
+    localStorage.setItem('musikku_admin_logged','1');
+    showAdminUI(true);
+    toggleSearch();
+    switchTab('admin');
+    showToast('✅ Selamat datang Admin!');
+    return;
+  }
   switchTab('songs');
   if(!q){ renderAllSongs(); return; }
   q=q.toLowerCase();
