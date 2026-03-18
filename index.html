@@ -29,6 +29,85 @@
   --green:#4ade80;
   --red:#f87171;
 }
+
+/* ===== THEMES ===== */
+[data-theme="ocean"]{--bg:#020b18;--bg2:#051525;--card:#0a2040;--card2:#0d2a55;--border:#1a4a7a;--accent:#00b4d8;--accent2:#0077b6;--accent3:#90e0ef;--text:#caf0f8;--muted:#4a9aba;--radius:10px;}
+[data-theme="sakura"]{--bg:#1a0a12;--bg2:#2a1020;--card:#3d1530;--card2:#4a1a3a;--border:#7a3060;--accent:#ff85a1;--accent2:#ff4d6d;--accent3:#ffc8dd;--text:#fff0f3;--muted:#c77daa;--radius:24px;}
+[data-theme="amoled"]{--bg:#000000;--bg2:#0a0a0a;--card:#141414;--card2:#1a1a1a;--border:#2a0000;--accent:#ff1744;--accent2:#ff6d00;--accent3:#ffab00;--text:#ffffff;--muted:#666666;--radius:4px;}
+[data-theme="forest"]{--bg:#0a1a0f;--bg2:#102015;--card:#1a3020;--card2:#1f3a25;--border:#2a5035;--accent:#52b788;--accent2:#ffc947;--accent3:#95d5b2;--text:#d8f3dc;--muted:#6aaa80;--radius:14px;}
+
+/* LAYOUT PER TEMA */
+
+/* OCEAN - Compact, semua kecil, card square kecil */
+[data-theme="ocean"] .album-card{width:86px;}
+[data-theme="ocean"] .album-art{width:86px;height:86px;font-size:26px;border-radius:10px;}
+[data-theme="ocean"] .album-name{font-size:10px;}
+[data-theme="ocean"] .album-count{font-size:9px;}
+[data-theme="ocean"] #playlistGrid{gap:6px;}
+[data-theme="ocean"] .playlist-card{min-height:60px;padding:10px 12px;border-radius:10px;}
+[data-theme="ocean"] .playlist-card div:nth-child(2){font-size:18px!important;}
+[data-theme="ocean"] .playlist-card div:first-child{font-size:9px!important;}
+[data-theme="ocean"] .hero{padding:12px;margin-bottom:10px;border-radius:10px;}
+[data-theme="ocean"] .hero-title{font-size:13px;}
+[data-theme="ocean"] .hero-sub{font-size:10px;}
+[data-theme="ocean"] .btn-play,.btn-sec{padding:6px 12px;font-size:10px;}
+[data-theme="ocean"] .song-card{padding:7px 10px;margin-bottom:4px;border-radius:10px;}
+[data-theme="ocean"] .song-art{width:34px;height:34px;font-size:13px;border-radius:8px;}
+[data-theme="ocean"] .song-title{font-size:12px;}
+[data-theme="ocean"] .song-meta{font-size:10px;}
+[data-theme="ocean"] .sec{font-size:11px;margin:6px 0 8px;}
+[data-theme="ocean"] .hscroll{gap:6px;}
+
+/* SAKURA - Besar, bulat, feminine */
+[data-theme="sakura"] .album-card{width:150px;}
+[data-theme="sakura"] .album-art{width:150px;height:150px;font-size:54px;border-radius:20px;}
+[data-theme="sakura"] .album-name{font-size:13px;font-weight:800;}
+[data-theme="sakura"] #playlistGrid{gap:12px;}
+[data-theme="sakura"] .playlist-card{min-height:105px;padding:16px;border-radius:20px;}
+[data-theme="sakura"] .playlist-card div:nth-child(2){font-size:26px!important;}
+[data-theme="sakura"] .hero{padding:22px;margin-bottom:16px;border-radius:20px;}
+[data-theme="sakura"] .hero-title{font-size:20px;}
+[data-theme="sakura"] .btn-play,.btn-sec{padding:12px 20px;font-size:13px;border-radius:16px;}
+[data-theme="sakura"] .song-card{padding:14px;margin-bottom:8px;border-radius:20px;}
+[data-theme="sakura"] .song-art{width:56px;height:56px;font-size:24px;border-radius:16px;}
+[data-theme="sakura"] .song-title{font-size:15px;}
+[data-theme="sakura"] .song-meta{font-size:12px;}
+[data-theme="sakura"] .sec{font-size:14px;margin:12px 0 14px;}
+
+/* AMOLED - Ultra compact, sharp, minimal */
+[data-theme="amoled"] .album-card{width:76px;}
+[data-theme="amoled"] .album-art{width:76px;height:76px;font-size:24px;border-radius:2px;}
+[data-theme="amoled"] .album-name{font-size:9px;letter-spacing:.5px;text-transform:uppercase;}
+[data-theme="amoled"] #playlistGrid{gap:4px;}
+[data-theme="amoled"] .playlist-card{min-height:52px;padding:8px;border-radius:2px;}
+[data-theme="amoled"] .playlist-card div:first-child{font-size:8px!important;letter-spacing:2px;text-transform:uppercase;}
+[data-theme="amoled"] .playlist-card div:nth-child(2){font-size:16px!important;font-weight:900;}
+[data-theme="amoled"] .hero{padding:10px;border-radius:2px;margin-bottom:8px;}
+[data-theme="amoled"] .hero-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+[data-theme="amoled"] .hero-sub{font-size:9px;text-transform:uppercase;letter-spacing:.5px;}
+[data-theme="amoled"] .btn-play,.btn-sec{padding:6px 10px;font-size:10px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;}
+[data-theme="amoled"] .song-card{padding:6px 8px;margin-bottom:2px;border-radius:2px;}
+[data-theme="amoled"] .song-art{width:30px;height:30px;font-size:12px;border-radius:2px;}
+[data-theme="amoled"] .song-title{font-size:11px;font-weight:900;letter-spacing:.3px;}
+[data-theme="amoled"] .song-meta{font-size:9px;letter-spacing:.5px;}
+[data-theme="amoled"] .sec{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin:6px 0 8px;}
+[data-theme="amoled"] .hscroll{gap:4px;}
+
+/* FOREST - Natural, medium, earthy */
+[data-theme="forest"] .album-card{width:118px;}
+[data-theme="forest"] .album-art{width:118px;height:118px;font-size:42px;border-radius:12px;}
+[data-theme="forest"] .album-name{font-size:12px;}
+[data-theme="forest"] #playlistGrid{gap:8px;}
+[data-theme="forest"] .playlist-card{min-height:78px;padding:14px;border-radius:14px;}
+[data-theme="forest"] .playlist-card div:nth-child(2){font-size:20px!important;}
+[data-theme="forest"] .hero{padding:18px;margin-bottom:14px;border-radius:14px;}
+[data-theme="forest"] .hero-title{font-size:16px;}
+[data-theme="forest"] .btn-play,.btn-sec{padding:9px 16px;font-size:12px;}
+[data-theme="forest"] .song-card{padding:10px;margin-bottom:5px;border-radius:12px;}
+[data-theme="forest"] .song-art{width:46px;height:46px;font-size:20px;border-radius:10px;}
+[data-theme="forest"] .song-title{font-size:13px;}
+[data-theme="forest"] .song-meta{font-size:11px;}
+[data-theme="forest"] .sec{font-size:13px;margin:8px 0 10px;}
 html,body{height:100%;width:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);}
 
 /* BG BLOBS */
@@ -331,6 +410,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
       <div class="h-actions">
         <button class="hbtn" id="searchToggleBtn" onclick="toggleSearch()">🔍</button>
+        <button class="hbtn" onclick="openThemeModal()" title="Tema" style="font-size:18px;">🎨</button>
         <button class="hbtn" id="adminHeaderBtn" style="display:none;" onclick="switchTab('admin')" title="Admin">⚙️</button>
         <button class="hbtn" onclick="openUserPanel()" title="Pengguna" style="display:flex;flex-direction:column;align-items:center;width:auto;padding:4px 8px;height:auto;gap:1px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -377,7 +457,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="hscroll" id="newSongsScroll"></div>
 
       <div class="sec"><em>📋</em> Daftar Putar</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+      <div id="playlistGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
         <div class="playlist-card" style="background:linear-gradient(135deg,#e84393,#9b27af);border-radius:16px;padding:14px;cursor:pointer;position:relative;overflow:hidden;min-height:90px;" onclick="switchTab('fav')">
           <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.8);margin-bottom:4px;">❤️ FAVORIT SAYA</div>
           <div id="favCount" style="font-size:22px;font-weight:900;color:#fff;">0 lagu</div>
@@ -610,6 +690,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div id="userPanel">
   <div class="up-box">
     <div id="upContent"></div>
+  </div>
+</div>
+
+<!-- THEME MODAL -->
+<div id="themeModal" style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:none;align-items:flex-end;">
+  <div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;padding:24px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:900;">🎨 Pilih Tampilan</div>
+      <button id="closeThemeBtn" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;">✕</button>
+    </div>
+    <div id="themeGrid"></div>
   </div>
 </div>
 
@@ -1054,12 +1145,17 @@ function renderHome(){
     heroTitle.textContent='Belum ada lagu';
     heroSub.textContent='Admin belum upload lagu. Cek lagi nanti!';
   }
-  if(!recent.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;">Belum ada lagu baru</div>'; }
+  var themeNow = document.documentElement.getAttribute('data-theme') || 'dark-purple';
+  var maxRecent = themeNow==='ocean'?8 : themeNow==='amoled'?6 : themeNow==='sakura'?4 : themeNow==='forest'?5 : 10;
+  var recentShow = recent.slice(0, maxRecent);
+  
+  if(!recentShow.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;">Belum ada lagu baru</div>'; }
   else {
-    el.innerHTML=recent.map(function(s){
+    el.innerHTML=recentShow.map(function(s){
       var realIdx=songs.findIndex(function(x){return x.id===s.id;});
+      var coverInner = s.coverUrl ? '<img src="'+s.coverUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : emoji(realIdx);
       return '<div class="album-card" onclick="loadSong('+realIdx+',true)">'+
-        '<div class="album-art">'+emoji(realIdx)+'</div>'+
+        '<div class="album-art">'+coverInner+'</div>'+
         '<div class="album-name">'+esc(s.title)+'</div>'+
         '<div class="album-count">'+esc(s.artist)+'</div>'+
       '</div>';
@@ -1106,6 +1202,9 @@ function songCardHTML(s, realIdx){
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
       '</button>'+
       (currentUser && s.uploadedBy === currentUser.deviceId ? '<button class="s-btn" style="color:var(--accent3);" id="uedit_'+s.id+'">✏️</button>' : '')+
+      (currentUser && s.uploadedBy === currentUser.deviceId ? '<button class="s-btn" style="color:var(--red);" id="udel_'+s.id+'">'+
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>'+
+      '</button>' : '')+
     '</div>'+
   '</div>';
 }
@@ -1119,12 +1218,14 @@ function renderAllSongs(filter){
     return;
   }
   el.innerHTML=list.map(function(s){ return songCardHTML(s,songs.findIndex(function(x){return x.id===s.id;})); }).join('');
-  // Attach edit button onclick untuk lagu milik user
+  // Attach edit & delete button onclick untuk lagu milik user
   if(currentUser){
     list.forEach(function(s){
       if(s.uploadedBy === currentUser.deviceId){
-        var btn = document.getElementById('uedit_'+s.id);
-        if(btn) btn.onclick = (function(docId, songId){ return function(e){ e.stopPropagation(); window.userEditSong(docId, songId); }; })(s._docId, s.id);
+        var editBtn = document.getElementById('uedit_'+s.id);
+        if(editBtn) editBtn.onclick = (function(docId, songId){ return function(e){ e.stopPropagation(); window.userEditSong(docId, songId); }; })(s._docId, s.id);
+        var delBtn = document.getElementById('udel_'+s.id);
+        if(delBtn) delBtn.onclick = (function(docId, songId, title){ return function(e){ e.stopPropagation(); window.userDeleteSong(docId, songId, title); }; })(s._docId, s.id, s.title);
       }
     });
   }
@@ -2294,6 +2395,51 @@ window.openUserAlbum = function(deviceId, name, avatar, tag){
 }
 
 // ==============================
+// USER DELETE SONG
+// ==============================
+window.userDeleteSong = async function(docId, songId, title){
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;';
+  
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg2);border-radius:20px;padding:24px;width:100%;max-width:300px;text-align:center;border:1px solid var(--red);';
+  box.innerHTML = '<div style="font-size:40px;margin-bottom:12px;">🗑️</div>'+
+    '<div style="font-size:16px;font-weight:800;margin-bottom:8px;">Hapus Lagu?</div>'+
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:20px;">'+esc(title)+'</div>';
+  
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px;';
+  
+  var cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;';
+  cancelBtn.textContent = 'Batal';
+  cancelBtn.onclick = function(){ modal.remove(); };
+  
+  var delBtn = document.createElement('button');
+  delBtn.style.cssText = 'flex:1;background:var(--red);border:none;border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;';
+  delBtn.textContent = 'Hapus';
+  delBtn.onclick = async function(){
+    try{
+      await deleteSongFromFirestore(docId);
+      if(currentUser){
+        currentUser.songCount = Math.max(0, (currentUser.songCount||1)-1);
+        saveUser(currentUser);
+      }
+      modal.remove();
+      showToast('🗑️ Lagu berhasil dihapus!');
+    }catch(e){
+      showToast('❌ Gagal hapus: '+e.message);
+    }
+  };
+  
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(delBtn);
+  box.appendChild(btnRow);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+// ==============================
 // USER EDIT SONG
 // ==============================
 window.userEditSong = async function(docId, songId){
@@ -2457,9 +2603,73 @@ function updateTimerBtn(){
 }
 
 // ==============================
+// THEME SYSTEM
+// ==============================
+var THEMES = [
+  { id:'dark-purple', name:'🌙 Dark Purple', desc:'Elegan & Modern', colors:['#0d0d1f','#6c63ff','#ff6584'] },
+  { id:'ocean',       name:'🌊 Ocean Blue',  desc:'Segar & Compact',  colors:['#020b18','#00b4d8','#90e0ef'] },
+  { id:'sakura',      name:'🌸 Sakura Pink', desc:'Cute & Rounded',   colors:['#1a0a12','#ff85a1','#ffc8dd'] },
+  { id:'amoled',      name:'🔥 Amoled Red',  desc:'Sharp & Bold',     colors:['#000000','#ff1744','#ff6d00'] },
+  { id:'forest',      name:'🌿 Forest',      desc:'Natural & Calm',   colors:['#0a1a0f','#52b788','#ffc947'] }
+];
+
+var currentTheme = localStorage.getItem('musik_theme') || 'dark-purple';
+
+function applyTheme(id){
+  currentTheme = id;
+  localStorage.setItem('musik_theme', id);
+  if(id === 'dark-purple'){
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', id);
+  }
+  if(typeof renderHome === 'function') setTimeout(renderHome, 50);
+}
+
+window.openThemeModal = function(){
+  var modal = document.getElementById('themeModal');
+  var grid = document.getElementById('themeGrid');
+  modal.style.display = 'flex';
+  grid.innerHTML = '';
+  
+  THEMES.forEach(function(t){
+    var isActive = currentTheme === t.id;
+    var card = document.createElement('div');
+    card.style.cssText = 'background:'+t.colors[0]+';border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;border:3px solid '+(isActive ? t.colors[1] : 'rgba(255,255,255,.1)')+';transition:all .2s;';
+    
+    var dots = t.colors.map(function(c){
+      return '<div style="width:20px;height:20px;border-radius:50%;background:'+c+';border:2px solid rgba(255,255,255,.3);flex-shrink:0;"></div>';
+    }).join('');
+    
+    card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+      '<div>'+
+        '<div style="font-size:15px;font-weight:800;color:#fff;">'+t.name+'</div>'+
+        '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">'+t.desc+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px;align-items:center;">'+dots+
+        (isActive ? '<div style="margin-left:6px;font-size:16px;color:'+t.colors[1]+';">✓</div>' : '')+
+      '</div>'+
+    '</div>';
+    
+    card.onclick = (function(tid, tname){ return function(){
+      applyTheme(tid);
+      document.getElementById('themeModal').style.display = 'none';
+      showToast('🎨 Tema '+tname+' diterapkan!');
+    };})(t.id, t.name);
+    
+    grid.appendChild(card);
+  });
+  
+  // Close button
+  var closeBtn = document.getElementById('closeThemeBtn');
+  if(closeBtn) closeBtn.onclick = function(){ modal.style.display = 'none'; };
+}
+
+// ==============================
 // EXPOSE FUNCTIONS TO WINDOW (karena pakai ES module)
 // ==============================
 window.showAdminUI = showAdminUI;
+window.openThemeModal = openThemeModal;
 window.setQueueMode = setQueueMode;
 window.openTimerModal = openTimerModal;
 window.closeTimerModal = closeTimerModal;
@@ -2472,6 +2682,7 @@ window.userAddSongs = userAddSongs;
 window.userPreviewCover = userPreviewCover;
 window.confirmUserUpload = confirmUserUpload;
 window.userEditSong = userEditSong;
+window.userDeleteSong = userDeleteSong;
 window.switchTab = switchTab;
 window.toggleSearch = toggleSearch;
 window.doSearch = doSearch;
@@ -2578,6 +2789,7 @@ setTimeout(function(){
   sp.classList.add('hide');
   setTimeout(function(){ sp.style.display='none'; },500);
   loadUser();
+  applyTheme(currentTheme);
   loadSongsFromFirestore();
   // Tampilkan UI admin kalau sudah login
   if(localStorage.getItem('musikku_admin_logged')==='1'){
