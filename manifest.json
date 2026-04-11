@@ -4,24 +4,22 @@
   "description": "Streaming musik dari Aldi Saha untuk semua",
   "start_url": "/Musikku/",
   "scope": "/Musikku/",
-  "display": "standalone",
-  "background_color": "#0d0d1f",
-  "theme_color": "#0d0d1f",
+  "display": "fullscreen",
   "orientation": "portrait",
+  "background_color": "#0d0d1f",
+  "theme_color": "#6c63ff",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["music", "entertainment"],
-  "lang": "id"
+  ]
 }
